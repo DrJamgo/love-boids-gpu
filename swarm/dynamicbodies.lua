@@ -85,23 +85,29 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   // vx,vy
   else {
     result = body1;
-
     vec2 pos = body0.xy;
-    
     float mass = body0.w;
-    vec2 force = vec2(0.0,0.0);
+
+    // gravity
+    result.xy += vec2(0,800)*dt;
+    //const speed
+    //result.xy = vec2(0,800);
+
+    // friction
+    result.xy -= result.xy * clamp(abs(result.xy) * dt * 0.5 , vec2(0,0), vec2(1,1));
+
+    vec2 vector = vec2(0.0,0.0);
+    float summed = 0;
     for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
       vec2 diff = vec2(cos(angle),sin(angle));
       float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).r * 10;
-      force += texval * diff / numSteps * (MASS_FACTOR) * 5000;
+      vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
+      summed += length(delta) / numSteps;
+      vector += delta;
     }
-    result.xy -= force.xy * dt / mass;
-
-    // gravity
-    result.xy += vec2(0,400)*dt;
-
-    // friction
-    result.xy -= result.xy * clamp(abs(result.xy) * dt, vec2(0,0), vec2(1,1));
+    vec2 targetVelo = vector.xy * 1000;
+    vec2 diff = result.xy - targetVelo;
+    result.xy += diff * summed *dt;
  }
   
   return result;
@@ -174,7 +180,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
     vec4 texcolor = Texel(tex, texture_coords);
     float distToCenter = length(v_vertex.xy);
-    texcolor.rgb *= (1.0-pow(distToCenter,10)) * v_mass / MASS_FACTOR;
+    texcolor.rgb *= (1.0-pow(distToCenter,5)) * v_mass / MASS_FACTOR;
     return texcolor * color;
 }
 #endif
