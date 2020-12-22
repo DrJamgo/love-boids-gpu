@@ -1,0 +1,3 @@
+[submodule "hump"]
+	path = hump
+	url = https://github.com/HDictus/hump.git

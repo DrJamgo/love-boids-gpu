@@ -1,19 +1,27 @@
 {
-    "configurations": 
-    [
-        {
-            "type": "lua-local",
-            "request": "launch",
-            "name": "Debug LOVE",
-            "program":
-            {
-                "command": "lovec"
-            },
-            "args": 
-            [
-                "${workspaceFolder}",
-                "-debug"
-            ],
-        }
-    ]
+  "configurations": [
+    {
+      "type": "lua-local",
+      "request": "launch",
+      "name": "Run LOVE",
+      "program": {
+        "command": "lovec"
+      },
+      "args": [
+        "${workspaceFolder}"
+      ],
+    },
+    {
+      "type": "lua-local",
+      "request": "launch",
+      "name": "Debug LOVE",
+      "program": {
+        "command": "lovec"
+      },
+      "args": [
+        "${workspaceFolder}",
+        "-debug"
+      ],
+    }
+  ]
 }
