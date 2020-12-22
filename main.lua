@@ -17,7 +17,7 @@ gSwarm = MySwarm(gWorld, 2048)
 
 function love.load()
   for i = 0, 400 do
-    local r = love.math.random(10,20)
+    local r = love.math.random(5,30)
     local mass = math.sqrt(r)
     gSwarm
   :addBody({x=love.math.random(0,800),y=love.math.random(0,800),m=mass,r=r})

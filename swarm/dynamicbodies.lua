@@ -1,7 +1,7 @@
 local vec = require "hump.vector-light"
 
 DynamicBodies = Class()
-DynamicBodies.spec = {'x','y','r','m'}
+DynamicBodies.spec = {'x','y','r','m','vx','vy'}
 
 function DynamicBodies:init(world, maxbodies)
   local texHeight = math.ceil(#self.spec / 4)
@@ -57,6 +57,7 @@ uniform vec2  dynamicTexSize;
 uniform float dt;
 
 const float numSteps = 32.0;
+const float maxSpeed = 100;
 
 #ifdef VERTEX
 vec4 position( mat4 transform_projection, vec4 vertex_position )
@@ -68,21 +69,42 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 #ifdef PIXEL
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
-  vec4 texcolor = Texel(tex, texture_coords);
-  vec2 pos = texcolor.xy;
-  float radius = texcolor.z+1;
-  float mass = texcolor.w;
-  vec2 vector = vec2(0.0,0.0);
-  for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
-    vec2 diff = vec2(cos(angle),sin(angle));
-    float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).r * 10;
-    vector += texval * texval * diff / numSteps * (MASS_FACTOR/mass) * 700;
-  }
+  vec4 body0 = Texel(tex, vec2(texture_coords.s, 0.25));
+  vec4 body1 = Texel(tex, vec2(texture_coords.s, 0.75));
 
-  texcolor.xy += vec2(0,200)*dt;
-  texcolor.xy -= vector.xy*dt;
-  texcolor.xy = clamp(texcolor.xy, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
-  return texcolor;
+  float radius = body0.z+1;
+
+  vec4 result;
+
+  // x,y,r,m
+  if (texture_coords.t < 0.5) {
+    result = body0;
+    result.xy += body1.xy * dt;
+    result.xy = clamp(result.xy, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
+  }
+  // vx,vy
+  else {
+    result = body1;
+
+    vec2 pos = body0.xy;
+    
+    float mass = body0.w;
+    vec2 force = vec2(0.0,0.0);
+    for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
+      vec2 diff = vec2(cos(angle),sin(angle));
+      float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).r * 10;
+      force += texval * diff / numSteps * (MASS_FACTOR) * 5000;
+    }
+    result.xy -= force.xy * dt / mass;
+
+    // gravity
+    result.xy += vec2(0,400)*dt;
+
+    // friction
+    result.xy -= result.xy * clamp(abs(result.xy) * dt, vec2(0,0), vec2(1,1));
+ }
+  
+  return result;
 }
 #endif
 ]]
@@ -152,7 +174,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
     vec4 texcolor = Texel(tex, texture_coords);
     float distToCenter = length(v_vertex.xy);
-    texcolor.rgb *= (1.0-distToCenter) * v_mass / MASS_FACTOR;
+    texcolor.rgb *= (1.0-pow(distToCenter,10)) * v_mass / MASS_FACTOR;
     return texcolor * color;
 }
 #endif
