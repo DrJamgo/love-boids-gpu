@@ -1,14 +1,15 @@
 local vec = require "hump.vector-light"
 
 DynamicBodies = Class()
-DynamicBodies.spec = {'x','y','r','m','vx','vy'}
+DynamicBodies.spec = {'x','y','vx','vy','r','m'}
 
 DynamicBodies.uniforms = {
   densityOrder = 4,
   velocityFactor = 5000,
+  posFactor = 50,
   textureFactor = 10,
   maxForceVector = 10000,
-  dampening = 0.5,
+  dampening = 0.1,
   target = {0,0},
 }
 
@@ -23,6 +24,7 @@ function DynamicBodies:init(world, maxbodies)
 
   gWiggleValues.d = {table=self.uniforms, value='densityOrder'}
   gWiggleValues.v = {table=self.uniforms, value='velocityFactor'}
+  gWiggleValues.p = {table=self.uniforms, value='posFactor'}
   gWiggleValues.t = {table=self.uniforms, value='textureFactor'}
   gWiggleValues.f = {table=self.uniforms, value='maxForceVector'}
   gWiggleValues.a = {table=self.uniforms, value='dampening'}
@@ -79,6 +81,7 @@ uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
 uniform float dt;
 uniform float velocityFactor;
+uniform float posFactor;
 uniform float textureFactor;
 uniform float maxForceVector;
 uniform float dampening;
@@ -100,35 +103,30 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
   vec4 body0 = Texel(tex, vec2(texture_coords.s, 0.25));
   vec4 body1 = Texel(tex, vec2(texture_coords.s, 0.75));
-
-  float radius = body0.z+2;
+  vec2 pos = body0.xy;
+  vec2 velo = body0.zw;
+  float radius = body1.x+2;
+  float mass = body1.y;
 
   vec4 result;
 
   // x,y,r,m
   if (texture_coords.t < 0.5) {
-    result = body0;
-    result.xy += body1.xy * dt;
-    result.xy = clamp(result.xy, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
-  }
-  // vx,vy
-  else {
-    result = body1;
-    vec2 pos = body0.xy;
-    float mass = body0.w;
+    pos += velo * dt;
+    pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
 
     // gravity
-    //result.xy += vec2(0,800)*dt;
+    //velo += vec2(0,800)*dt;
     //const speed
-    //result.xy = vec2(0,800);
+    //velo = vec2(0,800);
     vec2 targetDiff = target - pos;
     if(length(targetDiff) > 400) {
       targetDiff *= (400 / length(targetDiff));
     }
-    result.xy = result.xy * 0.9 + targetDiff * 0.1;
+    velo = velo * 0.9 + targetDiff * 0.1;
 
     // friction
-    result.xy -= result.xy * clamp(abs(result.xy) * dt * dampening, vec2(0,0), vec2(1,1));
+    velo -= velo * clamp(abs(velo) * dt * dampening, vec2(0,0), vec2(1,1));
 
     vec2 vector = vec2(0.0,0.0);
     float summed = 0;
@@ -145,8 +143,16 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       targetVelo = targetVelo * (maxForceVector / l);
     }
 
-    vec2 diff = result.xy - targetVelo;
-    result.xy += diff * summed * dt;
+    vec2 diff = velo - targetVelo;
+    velo += diff * summed * dt;
+    pos += diff * summed * dt * (posFactor / velocityFactor);
+
+    result.xy = pos;
+    result.zw = velo;
+  }
+  // vx,vy
+  else {
+    result = body1;
  }
   
   return result;
@@ -207,10 +213,16 @@ varying vec2  v_vertex;
 vec4 position( mat4 transform_projection, vec4 vertex_position )
 {
   float bodiesTexU = float(love_InstanceID) / bodiesTexSize.x;
-  vec4 body0 = Texel(bodiesTex, vec2(bodiesTexU, 0));
+  vec4 body0 = Texel(bodiesTex, vec2(bodiesTexU, 0.25));
+  vec4 body1 = Texel(bodiesTex, vec2(bodiesTexU, 0.75));
   vec2 pos = body0.xy;
-  v_radius = body0.z;
-  v_mass = body0.w;
+  vec2 velo = body0.zw;
+  float radius = body1.x;
+  float mass = body1.y;
+
+  v_radius = radius;
+  v_mass = mass;
+
   v_vertex = vertex_position.xy;
   vertex_position.xy += vertex_position.xy * v_radius + pos;
   return transform_projection * vertex_position;
