@@ -9,6 +9,10 @@ if arg[#arg] == "-debug" then
 end
 
 Class = require "hump.class" 
+gWiggleValues = {
+
+}
+
 require "swarm.myswarm"
 require "swarm.world"
 
@@ -25,9 +29,10 @@ function love.load()
 end
 local FPS
 function love.update(dt)
+  local dt = math.min(dt, 1/30)
   local count = 1
   if love.keyboard.isDown('s') then
-    count = 10
+    count = 2
   end
 
   for i=1,count do
@@ -44,4 +49,24 @@ function love.draw()
   gSwarm:draw()
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
   love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
+
+  local y = 80
+  for k,v in pairs(gWiggleValues) do
+    local t = gWiggleValues[k].table
+    local name = gWiggleValues[k].value
+    love.graphics.print(string.format('[%s] %s=%f',k,name,t[name]),0,y)
+    y = y + 20
+  end
+end
+
+function love.keypressed(key)
+  if gWiggleValues[key] then
+    local t = gWiggleValues[key].table
+    local name = gWiggleValues[key].value
+    if love.keyboard.isDown('lshift') then
+      t[name] = t[name] * 1.2
+    else
+      t[name] = t[name] * (1/1.2)
+    end
+  end
 end
