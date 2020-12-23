@@ -24,8 +24,8 @@ gGame = {
 }
 
 function love.load()
-  for i = 0, 200 do
-    local r = love.math.random(3,10)
+  for i = 0, 2000 do
+    local r = love.math.random(3,5)
     local mass = math.sqrt(r)
     gSwarm
   :addBody({x=love.math.random(0,love.graphics.getWidth()),y=love.math.random(0,love.graphics.getHeight()),m=mass,r=r})

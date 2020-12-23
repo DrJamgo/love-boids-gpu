@@ -7,7 +7,7 @@ DynamicBodies.uniforms = {
   densityOrder = 2,
   velocityFactor = 10000,
   posFactor = 100,
-  textureFactor = 20,
+  textureFactor = 10,
   dampening = 0.1,
   target = {0,0},
   limitVelocity = 100,
@@ -83,7 +83,6 @@ uniform float dt;
 uniform float velocityFactor;
 uniform float posFactor;
 uniform float textureFactor;
-uniform float dampening;
 uniform float limitVelocity = 50;
 
 uniform vec2 target;
