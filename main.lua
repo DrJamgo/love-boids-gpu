@@ -16,27 +16,39 @@ gWiggleValues = {
 require "swarm.myswarm"
 require "swarm.world"
 
-gWorld = World(800,800)
+gWorld = World(love.graphics.getDimensions())
 gSwarm = MySwarm(gWorld, 2048)
 
+gGame = {
+  time = 0
+}
+
 function love.load()
-  for i = 0, 100 do
-    local r = love.math.random(3,3)
+  for i = 0, 200 do
+    local r = love.math.random(3,10)
     local mass = math.sqrt(r)
     gSwarm
-  :addBody({x=love.math.random(0,800),y=love.math.random(0,800),m=mass,r=r})
+  :addBody({x=love.math.random(0,love.graphics.getWidth()),y=love.math.random(0,love.graphics.getHeight()),m=mass,r=r})
   end
 end
 local FPS
+
+
 function love.update(dt)
   local dt = math.min(dt, 1/30)
+  gGame.time = gGame.time + dt
   local count = 1
-  if love.keyboard.isDown('s') then
+  local factor = 1
+  if love.keyboard.isDown('+') then
     count = 2
+    factor = 1/count
+  end
+  if love.keyboard.isDown('-') then
+    factor = 2
   end
 
   for i=1,count do
-    gSwarm:updateBodies(dt/count)
+    gSwarm:updateBodies(dt * factor)
     gSwarm:renderToWorld()
     gWorld:update()
   end
@@ -45,8 +57,12 @@ function love.update(dt)
 end
 
 function love.draw()
+  love.graphics.push()
+  love.graphics.scale(1)
   gWorld:draw()
-  gSwarm:draw()
+  --gSwarm:draw()
+  love.graphics.pop()
+
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
   love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
 

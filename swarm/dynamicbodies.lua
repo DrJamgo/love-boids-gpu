@@ -4,10 +4,10 @@ DynamicBodies = Class()
 DynamicBodies.spec = {'x','y','vx','vy','r','m'}
 
 DynamicBodies.uniforms = {
-  densityOrder = 4,
+  densityOrder = 2,
   velocityFactor = 10000,
   posFactor = 100,
-  textureFactor = 10,
+  textureFactor = 20,
   dampening = 0.1,
   target = {0,0},
   limitVelocity = 100,
@@ -71,7 +71,7 @@ DynamicBodies.shadercommons = [[
   #pragma language glsl3
   
   #define M_PI 3.1415926535897932384626433832795
-  const float MASS_FACTOR = 32;
+  const float MASS_FACTOR = 8;
 ]]
 
 -- controlls behaviour of body
@@ -114,16 +114,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   if (texture_coords.t < 0.5) {
     pos += velo * dt;
 
-    // gravity
-    //velo += vec2(0,800)*dt;
-    //const speed
-    //velo = vec2(0,800);
     vec2 targetDiff = target - pos;
-    targetDiff *= 2000 / length(targetDiff);
-    velo = velo * 0.9 + targetDiff * 0.1;
-
-    // friction
-    velo -= velo * clamp(abs(velo) * dt * dampening, vec2(0,0), vec2(1,1));
+    targetDiff *= 400 / length(targetDiff);
+    float f = dt;
+    velo = velo * (1-dt) + targetDiff * dt;
 
     vec2 vector = vec2(0.0,0.0);
     float summed = 0;
@@ -135,8 +129,6 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       vector += delta;
     }
     vec2 targetVelo = vector.xy * velocityFactor;
-    float l = length(targetVelo);
-
     vec2 diff = velo - targetVelo;
     velo += diff * summed * dt;
     pos += diff * summed * dt * (posFactor / velocityFactor);
@@ -148,7 +140,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       velo *= limitVelocity / absvelo;
     }
 
-    result.xy = pos;
+    result.xy = floor(pos + vec2(0.5,0.5));
     result.zw = velo;
   }
   // vx,vy
@@ -238,7 +230,11 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     //float distToCenter = max(abs(v_vertex.x),abs(v_vertex.y)); // <- square
     vec4 result = vec4(1,1,1,1);
     float density = (1.0-pow(distToCenter,densityOrder));
+    
     result.rgb *= density * v_mass / MASS_FACTOR;
+    if(all(lessThan(result.rgb, vec3(0,0,0)))) {
+      discard;
+    }
     return result;
 }
 #endif
@@ -251,7 +247,6 @@ function DynamicBodies:renderToWorld(world)
   self.worldshader:send('bodiesTexSize', {self.data:getDimensions()})
   love.graphics.setBlendMode('add','premultiplied')
   self.world.target:renderTo(function()
-    love.graphics.clear(0,0,0,1)
     love.graphics.drawInstanced(mesh, self.size)
   end)
   love.graphics.reset()
