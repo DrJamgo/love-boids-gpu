@@ -5,12 +5,12 @@ DynamicBodies.spec = {'x','y','vx','vy','r','m'}
 
 DynamicBodies.uniforms = {
   densityOrder = 4,
-  velocityFactor = 5000,
-  posFactor = 50,
+  velocityFactor = 10000,
+  posFactor = 100,
   textureFactor = 10,
-  maxForceVector = 10000,
   dampening = 0.1,
   target = {0,0},
+  limitVelocity = 100,
 }
 
 function DynamicBodies:init(world, maxbodies)
@@ -26,8 +26,8 @@ function DynamicBodies:init(world, maxbodies)
   gWiggleValues.v = {table=self.uniforms, value='velocityFactor'}
   gWiggleValues.p = {table=self.uniforms, value='posFactor'}
   gWiggleValues.t = {table=self.uniforms, value='textureFactor'}
-  gWiggleValues.f = {table=self.uniforms, value='maxForceVector'}
   gWiggleValues.a = {table=self.uniforms, value='dampening'}
+  gWiggleValues.l = {table=self.uniforms, value='limitVelocity'}
 end
 
 function DynamicBodies:_applyUniforms(shader)
@@ -83,13 +83,13 @@ uniform float dt;
 uniform float velocityFactor;
 uniform float posFactor;
 uniform float textureFactor;
-uniform float maxForceVector;
 uniform float dampening;
+uniform float limitVelocity = 50;
 
 uniform vec2 target;
 
 const float numSteps = 32.0;
-const float maxSpeed = 100;
+
 
 #ifdef VERTEX
 vec4 position( mat4 transform_projection, vec4 vertex_position )
@@ -105,7 +105,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   vec4 body1 = Texel(tex, vec2(texture_coords.s, 0.75));
   vec2 pos = body0.xy;
   vec2 velo = body0.zw;
-  float radius = body1.x+2;
+  float radius = body1.x+3;
   float mass = body1.y;
 
   vec4 result;
@@ -113,16 +113,13 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   // x,y,r,m
   if (texture_coords.t < 0.5) {
     pos += velo * dt;
-    pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
 
     // gravity
     //velo += vec2(0,800)*dt;
     //const speed
     //velo = vec2(0,800);
     vec2 targetDiff = target - pos;
-    if(length(targetDiff) > 400) {
-      targetDiff *= (400 / length(targetDiff));
-    }
+    targetDiff *= 2000 / length(targetDiff);
     velo = velo * 0.9 + targetDiff * 0.1;
 
     // friction
@@ -139,13 +136,17 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     }
     vec2 targetVelo = vector.xy * velocityFactor;
     float l = length(targetVelo);
-    if(l > maxForceVector) {
-      targetVelo = targetVelo * (maxForceVector / l);
-    }
 
     vec2 diff = velo - targetVelo;
     velo += diff * summed * dt;
     pos += diff * summed * dt * (posFactor / velocityFactor);
+
+    pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
+
+    float absvelo = length(velo);
+    if(absvelo > limitVelocity) {
+      velo *= limitVelocity / absvelo;
+    }
 
     result.xy = pos;
     result.zw = velo;

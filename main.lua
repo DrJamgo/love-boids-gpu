@@ -20,8 +20,8 @@ gWorld = World(800,800)
 gSwarm = MySwarm(gWorld, 2048)
 
 function love.load()
-  for i = 0, 500 do
-    local r = love.math.random(5,20)
+  for i = 0, 100 do
+    local r = love.math.random(3,3)
     local mass = math.sqrt(r)
     gSwarm
   :addBody({x=love.math.random(0,800),y=love.math.random(0,800),m=mass,r=r})
@@ -54,7 +54,7 @@ function love.draw()
   for k,v in pairs(gWiggleValues) do
     local t = gWiggleValues[k].table
     local name = gWiggleValues[k].value
-    love.graphics.print(string.format('[%s] %s=%f',k,name,t[name]),0,y)
+    love.graphics.printf(string.format('[%s] %s=%f',k,name,t[name]),love.graphics.getWidth()-400,y,400,'right')
     y = y + 20
   end
 end
@@ -68,5 +68,10 @@ function love.keypressed(key)
     else
       t[name] = t[name] * (1/1.2)
     end
+  end
+  if key == 'r' then
+    gWorld = World(800,800)
+    gSwarm = MySwarm(gWorld, 2048)
+    love.load()
   end
 end
