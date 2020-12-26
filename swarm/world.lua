@@ -14,7 +14,7 @@ function World:update()
   
   self.target:renderTo(
     function()
-      love.graphics.clear(0,0,0,1)
+      love.graphics.clear(0,0,0,0)
       love.graphics.draw(testimage)
     end
   )

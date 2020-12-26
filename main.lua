@@ -9,9 +9,7 @@ if arg[#arg] == "-debug" then
 end
 
 Class = require "hump.class" 
-gWiggleValues = {
-
-}
+gWiggleValues = require 'wiggle'
 
 require "swarm.myswarm"
 require "swarm.world"
@@ -23,16 +21,17 @@ gGame = {
   time = 0
 }
 
+local canvas = love.graphics.newCanvas(love.graphics.getDimensions())
+
 function love.load()
-  for i = 0, 2000 do
-    local r = love.math.random(3,5)
+  for i = 0, 400 do
+    local r = love.math.random(2,5)
     local mass = math.sqrt(r)
-    gSwarm
-  :addBody({x=love.math.random(0,love.graphics.getWidth()),y=love.math.random(0,love.graphics.getHeight()),m=mass,r=r})
+    gSwarm:addBody({x=love.math.random(0,love.graphics.getWidth()),y=love.math.random(0,love.graphics.getHeight()),m=mass,r=r})
   end
 end
 local FPS
-
+local FRAME = 0
 
 function love.update(dt)
   local dt = math.min(dt, 1/30)
@@ -43,8 +42,9 @@ function love.update(dt)
     count = 2
     factor = 1/count
   end
-  if love.keyboard.isDown('-') then
+  if love.mouse.isDown(1) then
     factor = 2
+    count = (FRAME % 2 == 0) and 1 or 0
   end
 
   for i=1,count do
@@ -54,37 +54,41 @@ function love.update(dt)
   end
   local f = 0.05
   FPS = (FPS or (1/f)) * (1-f) + (1/dt) * f
+  FRAME = FRAME + 1
 end
 
+local town = love.graphics.newImage('town.png')
+
 function love.draw()
+  love.graphics.reset()
   love.graphics.push()
   love.graphics.scale(1)
-  gWorld:draw()
+  --gWorld:draw()
   --gSwarm:draw()
+
+  --love.graphics.setCanvas(canvas)
+  --love.graphics.setColor(0,4/255,92/255,0.1)
+  --love.graphics.rectangle('fill',0,0,canvas:getDimensions())
+
+  --love.graphics.setColor(20/255,16/255,16/255,1)
+  --love.graphics.draw(gWorld.dynamic)
+  
+  --love.graphics.setCanvas()
+  love.graphics.setColor(1,1,1,1)
+  love.graphics.draw(town,0,0,0,1,1)
+  gSwarm:draw()
+  love.graphics.draw(canvas)
+
   love.graphics.pop()
 
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
   love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
 
-  local y = 80
-  for k,v in pairs(gWiggleValues) do
-    local t = gWiggleValues[k].table
-    local name = gWiggleValues[k].value
-    love.graphics.printf(string.format('[%s] %s=%f',k,name,t[name]),love.graphics.getWidth()-400,y,400,'right')
-    y = y + 20
-  end
+  gWiggleValues:draw(love.graphics.getWidth()-300,80,300)
 end
 
 function love.keypressed(key)
-  if gWiggleValues[key] then
-    local t = gWiggleValues[key].table
-    local name = gWiggleValues[key].value
-    if love.keyboard.isDown('lshift') then
-      t[name] = t[name] * 1.2
-    else
-      t[name] = t[name] * (1/1.2)
-    end
-  end
+  gWiggleValues:keypressed(key)
   if key == 'r' then
     gWorld = World(800,800)
     gSwarm = MySwarm(gWorld, 2048)

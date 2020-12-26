@@ -5,10 +5,9 @@ DynamicBodies.spec = {'x','y','vx','vy','r','m'}
 
 DynamicBodies.uniforms = {
   densityOrder = 2,
-  velocityFactor = 10000,
+  velocityFactor = 2500,
   posFactor = 100,
   textureFactor = 10,
-  dampening = 0.1,
   target = {0,0},
   limitVelocity = 100,
 }
@@ -22,12 +21,11 @@ function DynamicBodies:init(world, maxbodies)
   self.updateshader = love.graphics.newShader(self.shadercommons .. self.updateshader)
   self.worldshader = love.graphics.newShader(self.shadercommons .. self.worldshader)
 
-  gWiggleValues.d = {table=self.uniforms, value='densityOrder'}
-  gWiggleValues.v = {table=self.uniforms, value='velocityFactor'}
-  gWiggleValues.p = {table=self.uniforms, value='posFactor'}
-  gWiggleValues.t = {table=self.uniforms, value='textureFactor'}
-  gWiggleValues.a = {table=self.uniforms, value='dampening'}
-  gWiggleValues.l = {table=self.uniforms, value='limitVelocity'}
+  gWiggleValues:add('d', self.uniforms, 'densityOrder')
+  gWiggleValues:add('v', self.uniforms, 'velocityFactor')
+  gWiggleValues:add('p', self.uniforms, 'posFactor')
+  gWiggleValues:add('t', self.uniforms, 'textureFactor')
+  gWiggleValues:add('l', self.uniforms, 'limitVelocity')
 end
 
 function DynamicBodies:_applyUniforms(shader)
@@ -71,7 +69,7 @@ DynamicBodies.shadercommons = [[
   #pragma language glsl3
   
   #define M_PI 3.1415926535897932384626433832795
-  const float MASS_FACTOR = 8;
+  const float MASS_FACTOR = 255 / pow(10,2);
 ]]
 
 -- controlls behaviour of body
@@ -139,7 +137,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       velo *= limitVelocity / absvelo;
     }
 
-    result.xy = floor(pos + vec2(0.5,0.5));
+    result.xy = pos;//floor(pos + vec2(0.5,0.5));
     result.zw = velo;
   }
   // vx,vy
@@ -244,7 +242,7 @@ function DynamicBodies:renderToWorld(world)
   self:_applyUniforms(self.worldshader)
   self.worldshader:send('bodiesTex', self.canvas)
   self.worldshader:send('bodiesTexSize', {self.data:getDimensions()})
-  love.graphics.setBlendMode('add','premultiplied')
+  love.graphics.setBlendMode('lighten','premultiplied')
   self.world.target:renderTo(function()
     love.graphics.drawInstanced(mesh, self.size)
   end)
