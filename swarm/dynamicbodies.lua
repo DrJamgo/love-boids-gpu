@@ -19,16 +19,11 @@ function DynamicBodies:init(world, maxbodies)
   self.size = 0
   self.capacity = maxbodies
   self.updateshader = love.graphics.newShader(self.shadercommons .. self.updateshader)
-  self.worldshader = love.graphics.newShader(self.shadercommons .. self.worldshader)
-
-  gWiggleValues:add('d', self.uniforms, 'densityOrder')
-  gWiggleValues:add('v', self.uniforms, 'velocityFactor')
-  gWiggleValues:add('p', self.uniforms, 'posFactor')
-  gWiggleValues:add('t', self.uniforms, 'textureFactor')
-  gWiggleValues:add('l', self.uniforms, 'limitVelocity')
+  self.bodyToWorldShader = love.graphics.newShader(self.shadercommons .. self.bodyToWorldShader)
 end
 
-function DynamicBodies:_applyUniforms(shader)
+function DynamicBodies:_applyUniforms()
+  local shader = love.graphics.getShader()
   for k,v in pairs(self.uniforms) do
     if shader:hasUniform(k) then
       shader:send(k,v)
@@ -152,6 +147,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
 function DynamicBodies:updateBodies(dt)
   self.uniforms.target = {love.graphics.inverseTransformPoint(love.mouse.getPosition())}
+  self.uniforms.dt = dt
+  self.uniforms.dynamicTex = self.world.dynamic
+  self.uniforms.dynamicTexSize = {self.world.dynamic:getDimensions()}
+
   local source = self.canvas
   if self.needupload then
     source = love.graphics.newImage(self.data)
@@ -162,10 +161,7 @@ function DynamicBodies:updateBodies(dt)
     function()
       love.graphics.setBlendMode('replace','premultiplied')
       love.graphics.setShader(self.updateshader)
-      self:_applyUniforms(self.updateshader)
-      if self.updateshader:hasUniform('dt') then self.updateshader:send('dt', dt) end
-      self.updateshader:send('dynamicTex', self.world.dynamic)
-      self.updateshader:send('dynamicTexSize', {self.world.dynamic:getDimensions()})
+      self:_applyUniforms()
       love.graphics.draw(source)
       love.graphics.reset()
     end
@@ -188,7 +184,7 @@ local vertices = {
 local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
 -- updates dynamic image layers
-DynamicBodies.worldshader = [[
+DynamicBodies.bodyToWorldShader = [[
 
 uniform Image bodiesTex;
 uniform vec2  bodiesTexSize;
@@ -238,10 +234,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 ]]
 
 function DynamicBodies:renderToWorld(world)
-  love.graphics.setShader(self.worldshader)
-  self:_applyUniforms(self.worldshader)
-  self.worldshader:send('bodiesTex', self.canvas)
-  self.worldshader:send('bodiesTexSize', {self.data:getDimensions()})
+  love.graphics.setShader(self.bodyToWorldShader)
+  self:_applyUniforms(self.bodyToWorldShader)
+  self.bodyToWorldShader:send('bodiesTex', self.canvas)
+  self.bodyToWorldShader:send('bodiesTexSize', {self.data:getDimensions()})
   love.graphics.setBlendMode('lighten','premultiplied')
   self.world.target:renderTo(function()
     love.graphics.drawInstanced(mesh, self.size)

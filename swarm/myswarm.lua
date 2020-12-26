@@ -5,8 +5,10 @@ MySwarm = Class({__includes={DynamicBodies}})
 MySwarm.ectoshader = [[
 
 uniform Image bodiesTex;
+uniform Image heatPalette;
 uniform vec2  bodiesTexSize;
-const float densityOrder = 0.5;
+uniform float densityOrderHeat;
+uniform float heatTest;
 
 varying float v_mass;
 varying float v_radius;
@@ -28,7 +30,7 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
   v_mass = mass;
 
   v_vertex = vertex_position.xy;
-  vertex_position.xy += vertex_position.xy * v_radius + pos;
+  vertex_position.xy += vertex_position.xy * 2 * v_radius + pos;
   return transform_projection * vertex_position;
 }
 #endif
@@ -38,13 +40,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
     vec4 texcolor = Texel(tex, texture_coords);
     float distToCenter = length(v_vertex.xy); // <- circle
-    //float distToCenter = max(abs(v_vertex.x),abs(v_vertex.y)); // <- square
     vec4 result = vec4(1,1,1,1);
-    float density = (1.0-pow(distToCenter,densityOrder));
-    
-    result.r = density * v_mass / MASS_FACTOR;
-    result.g = 0;
-    result.b = 0.2-(density/2);
+    float density = (1.0-pow(distToCenter,densityOrderHeat)+0.2) * heatTest;
+    result = Texel(heatPalette, vec2(density,0.5));
+    result.a *= 1-distToCenter;
     if(distToCenter > 1) {
       discard;
     }
@@ -56,6 +55,13 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 function MySwarm:init(...)
   DynamicBodies.init(self, ...)
   self.ectoshader = love.graphics.newShader(self.shadercommons .. self.ectoshader)
+  self.uniforms.heatPalette = love.graphics.newImage('darknesspalette.png')
+  self.uniforms.heatPalette:setFilter('nearest','nearest')
+  self.uniforms.densityOrderHeat = 1
+  self.uniforms.heatTest = 1
+
+  gWiggleValues:add('d', self.uniforms, 'densityOrderHeat')
+  gWiggleValues:add('h', self.uniforms, 'heatTest')
 end
 
 -- A simple small triangle with the default position, texture coordinate, and color vertex attributes.

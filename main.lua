@@ -66,25 +66,30 @@ function love.draw()
   --gWorld:draw()
   --gSwarm:draw()
 
-  --love.graphics.setCanvas(canvas)
-  --love.graphics.setColor(0,4/255,92/255,0.1)
-  --love.graphics.rectangle('fill',0,0,canvas:getDimensions())
+  local canvas2 = love.graphics.newCanvas(canvas:getDimensions())
+  love.graphics.setCanvas(canvas2)
+  love.graphics.setColor(1,1,1,0.95)
+  love.graphics.draw(canvas)
+  gSwarm:draw()
+  canvas = canvas2
 
-  --love.graphics.setColor(20/255,16/255,16/255,1)
-  --love.graphics.draw(gWorld.dynamic)
-  
-  --love.graphics.setCanvas()
+  love.graphics.setCanvas()
   love.graphics.setColor(1,1,1,1)
   love.graphics.draw(town,0,0,0,1,1)
-  gSwarm:draw()
+  --gSwarm:draw()
+  
   love.graphics.draw(canvas)
-
   love.graphics.pop()
 
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
   love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
 
   gWiggleValues:draw(love.graphics.getWidth()-300,80,300)
+
+  -- debug drawing
+  love.graphics.scale(0.2)
+  gWorld:draw()
+  love.graphics.reset()
 end
 
 function love.keypressed(key)

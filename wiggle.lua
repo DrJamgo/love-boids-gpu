@@ -26,7 +26,7 @@ function Wiggle:draw(x, y, width, align)
     if type(v) == 'table' then
       local t = self[k].table
       local name = self[k].value
-      love.graphics.printf(string.format('[%s] %s=%.1f',k,name,t[name]),x, y, width, align or 'left')
+      love.graphics.printf(string.format('[%s] %s=%.1f',k,name,t[name]),x, y, width, align or 'right')
       y = y + 20
     end
   end

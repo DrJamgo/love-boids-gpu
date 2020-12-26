@@ -21,5 +21,6 @@ function World:update()
 end
 
 function World:draw()
+  love.graphics.rectangle('line',0,0,love.graphics.getWidth(), love.graphics.getHeight())
   love.graphics.draw(self.dynamic)
 end
