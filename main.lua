@@ -28,7 +28,7 @@ function love.load()
   for i = 0, 200 do
     local r = love.math.random(2,5)
     local mass = math.sqrt(r)
-    gSwarm:addBody({x=love.math.random(0,gWorld.dynamic:getWidth()),y=love.math.random(0,gWorld.dynamic:getHeight()),m=mass,r=r})
+    gSwarm:addBody({x=love.math.random(20,gWorld.dynamic:getWidth()-20),y=love.math.random(20,gWorld.dynamic:getHeight()-20),m=mass,r=r})
   end
 
   gWiggleValues:add('p', gGame, 'pause')

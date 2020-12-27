@@ -16,6 +16,12 @@ function World:update()
   self.target:renderTo(
     function()
       love.graphics.clear(0,0,0,0)
+      local w,h = self:getDimensions()
+      local d = 10
+      love.graphics.rectangle('fill',0,0,d,h)
+      love.graphics.rectangle('fill',w-d,0,d,h)
+      love.graphics.rectangle('fill',0,0,w,d)
+      love.graphics.rectangle('fill',0,h-d,w,d)
       --love.graphics.draw(testimage)
     end
   )

@@ -99,7 +99,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     for(int x = -sight; x <= sight; x+=step) {
       for(int y = -sight; y <= sight; y+=step) {
         vec2 dv = vec2(float(x),float(y));
-        if (min(abs(x),abs(y)) > radius+2) {
+        if (min(abs(x),abs(y)) > radius+1) {
           float weight = radius / length(dv);
           vec4 dynamic = Texel(dynamicTex, (pos + dv) / dynamicTexSize);
           if (dynamic.a > 0) {
