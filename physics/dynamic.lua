@@ -23,6 +23,7 @@ function Dynamic:init(world, maxbodies)
   self.data = love.image.newImageData(maxbodies, texHeight, 'rgba32f')
   self.size = 0
   self.capacity = maxbodies
+  self.updateshader = self.updateshader:gsub('PIXELSPEC', self:pixelSpecCode())
   self.updateshader = love.graphics.newShader(self.shadercommons .. self.updateshader)
   self.bodyToWorldShader = love.graphics.newShader(self.shadercommons .. self.bodyToWorldShader)
 end
@@ -53,7 +54,7 @@ uniform float dt;
 uniform float velocityFactor;
 uniform float posFactor;
 uniform float textureFactor;
-uniform float limitVelocity ;
+uniform float limitVelocity;
 
 uniform vec2 target;
 
@@ -68,19 +69,24 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 #endif
  
 #ifdef PIXEL
+
+#define _input_tex tex
+#define _input_u texture_coords.s
+#define _output_row screen_coords.y - 0.5
+
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
-  vec4 body0 = Texel(tex, vec2(texture_coords.s, 0.25));
-  vec4 body1 = Texel(tex, vec2(texture_coords.s, 0.75));
-  vec2 pos = body0.xy;
-  vec2 velo = body0.zw;
-  float radius = body1.x+2;
-  float mass = body1.y;
+  PIXELSPEC
+
+  vec2 pos = vec2(_x,_y);
+  vec2 velo = vec2(_vx,_vy);
+  float radius = _r+2;
+  float mass = _m;
 
   vec4 result;
 
-  // x,y,r,m
-  if (texture_coords.t < 0.5) {
+  // x,y,vx,vy
+  if (_output_row == 0) {
     pos += velo * dt;
 
     vec2 targetDiff = target - pos;
@@ -112,10 +118,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     result.xy = pos;//floor(pos + vec2(0.5,0.5));
     result.zw = velo;
   }
-  // vx,vy
-  else {
-    result = body1;
- }
+  // r,m
+  else if(_output_row == 1){
+    result = _input_row_1;
+  }
   
   return result;
 }

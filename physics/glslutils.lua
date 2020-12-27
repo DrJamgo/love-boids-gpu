@@ -23,8 +23,12 @@ function PixelSpec:pixelSpecHeight()
   return math.ceil(#self.spec / 4)
 end
 
-function PixelSpec:forEachChannel(func)
-
+-- callback: function(row, component, name)
+function PixelSpec:forEachChannel(callback)
+  local comps ={'x','y','z','w'}
+  for c=0,#self.spec-1 do
+    callback(math.floor((c)/4), comps[(c % 4)+1], self.spec[c+1])
+  end
 end
 
 function PixelSpec:write(index, source)
@@ -49,13 +53,17 @@ function PixelSpec:read(index, target)
 end
 
 function PixelSpec:pixelSpecCode()
-  local code = ''
+  local code = '\n'
   local h = self:pixelSpecHeight()
   for i=0,h-1 do
-    code = code .. string.format('_pixel_%d = Texel(tex, vec2(_index, %.3f));\n',i,(2*i+1)/(h*2))
+    code = code .. string.format('  vec4 _input_row_%d = Texel(_input_tex, vec2(_input_u, %.3f));\n',i,(2*i+1)/(h*2))
   end
 
-  for k,v in pairs(self.spec) do
+  self:forEachChannel(
+    function(row, component, name)
+      code = code .. string.format('  float _%s = _input_row_%d.%s;\n', name, row, component)
+    end
+  )
 
-  end
+  return code
 end
