@@ -1,6 +1,6 @@
 
 World = Class()
-function World:init(width, height)
+function World:init(width, height, maxspeed, maxmass)
   self.dynamic = love.graphics.newCanvas(width, height)
   self.target = love.graphics.newCanvas(width, height)
 end

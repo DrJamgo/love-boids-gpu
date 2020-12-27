@@ -11,8 +11,8 @@ end
 Class = require "hump.class" 
 gWiggleValues = require 'wiggle'
 
-require "swarm.myswarm"
-require "swarm.world"
+require "physics.myswarm"
+require "physics.world"
 
 gWorld = World(love.graphics.getDimensions())
 gSwarm = MySwarm(gWorld, 2048)
@@ -87,9 +87,9 @@ function love.draw()
   gWiggleValues:draw(love.graphics.getWidth()-300,80,300)
 
   -- debug drawing
-  love.graphics.scale(0.2)
-  gWorld:draw()
-  love.graphics.reset()
+  --love.graphics.scale(0.3)
+  --gWorld:draw()
+  --love.graphics.reset()
 end
 
 function love.keypressed(key)

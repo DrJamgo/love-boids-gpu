@@ -1,6 +1,6 @@
-require 'swarm.dynamicbodies'
+require 'physics.dynamic'
 
-MySwarm = Class({__includes={DynamicBodies}})
+MySwarm = Class({__includes={Dynamic}})
 
 MySwarm.ectoshader = [[
 
@@ -53,7 +53,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 ]]
 
 function MySwarm:init(...)
-  DynamicBodies.init(self, ...)
+  Dynamic.init(self, ...)
   self.ectoshader = love.graphics.newShader(self.shadercommons .. self.ectoshader)
   self.uniforms.heatPalette = love.graphics.newImage('darknesspalette.png')
   self.uniforms.heatPalette:setFilter('nearest','nearest')
@@ -78,7 +78,7 @@ local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
 function MySwarm:draw()
   love.graphics.setShader(self.ectoshader)
-  self:_applyUniforms(self.ectoshader)
+  self:sendUniforms()
   self.ectoshader:send('bodiesTex', self.canvas)
   self.ectoshader:send('bodiesTexSize', {self.data:getDimensions()})
   love.graphics.drawInstanced(mesh, self.size)

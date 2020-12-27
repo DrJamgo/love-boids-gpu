@@ -1,9 +1,12 @@
-local vec = require "hump.vector-light"
 
-DynamicBodies = Class()
-DynamicBodies.spec = {'x','y','vx','vy','r','m'}
+require 'physics.glslutils'
 
-DynamicBodies.uniforms = {
+Dynamic = Class({__includes={Uniforms, PixelSpec}})
+Dynamic.spec = {
+  'x','y','vx','vy',
+  'r','m'}
+
+Dynamic.uniforms = {
   densityOrder = 2,
   velocityFactor = 2500,
   posFactor = 100,
@@ -12,8 +15,10 @@ DynamicBodies.uniforms = {
   limitVelocity = 100,
 }
 
-function DynamicBodies:init(world, maxbodies)
-  local texHeight = math.ceil(#self.spec / 4)
+function Dynamic:init(world, maxbodies)
+  PixelSpec.init(self, self.spec)
+
+  local texHeight = self:pixelSpecHeight()
   self.world = world
   self.data = love.image.newImageData(maxbodies, texHeight, 'rgba32f')
   self.size = 0
@@ -22,53 +27,25 @@ function DynamicBodies:init(world, maxbodies)
   self.bodyToWorldShader = love.graphics.newShader(self.shadercommons .. self.bodyToWorldShader)
 end
 
-function DynamicBodies:_applyUniforms()
-  local shader = love.graphics.getShader()
-  for k,v in pairs(self.uniforms) do
-    if shader:hasUniform(k) then
-      shader:send(k,v)
-    end
-  end
-end
-
-function DynamicBodies:write(index, source)
-  local c = 1
-  for y=0,self.data:getHeight()-1 do
-    local values = {0,0,0,0}
-    for k=1,4 do
-      local v = self.spec[k+y*4]
-      values[k] = source[v] or 0
-    end
-    self.data:setPixel(self.size,y,values)
-  end
-end
-
-function DynamicBodies:read(index, target)
-  -- TODO: Optmize
-  local target = target or {}
-  for k,v in ipairs(self.spec) do
-    local values = {self.data:getPixel(index,(k-1)/4)}
-    target[v] = values[(k-1)%4+1]
-  end
-  return target
-end
-
-function DynamicBodies:addBody(body)
+function Dynamic:addBody(body)
   self.size = self.size + 1
   self:write(self.size, body)
   self.needupload = true
 end
 
+Dynamic.MASS_FACTOR = 255 / math.pow(10,2)
+Dynamic.SPEED_FACTOR = Dynamic.uniforms.limitVelocity * 2
 
-DynamicBodies.shadercommons = [[
+Dynamic.shadercommons = [[
   #pragma language glsl3
   
   #define M_PI 3.1415926535897932384626433832795
-  const float MASS_FACTOR = 255 / pow(10,2);
+  const float MASS_FACTOR = ]]..Dynamic.MASS_FACTOR..[[;
+  const float SPEED_FACTOR = ]]..Dynamic.SPEED_FACTOR..[[;
 ]]
 
 -- controlls behaviour of body
-DynamicBodies.updateshader = [[
+Dynamic.updateshader = [[
 
 uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
@@ -76,7 +53,7 @@ uniform float dt;
 uniform float velocityFactor;
 uniform float posFactor;
 uniform float textureFactor;
-uniform float limitVelocity = 50;
+uniform float limitVelocity ;
 
 uniform vec2 target;
 
@@ -97,7 +74,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   vec4 body1 = Texel(tex, vec2(texture_coords.s, 0.75));
   vec2 pos = body0.xy;
   vec2 velo = body0.zw;
-  float radius = body1.x+3;
+  float radius = body1.x+2;
   float mass = body1.y;
 
   vec4 result;
@@ -107,20 +84,20 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     pos += velo * dt;
 
     vec2 targetDiff = target - pos;
-    targetDiff *= 400 / length(targetDiff);
+    targetDiff *= 1000 / length(targetDiff);
     float f = dt;
     velo = velo * (1-dt) + targetDiff * dt;
 
-    vec2 vector = vec2(0.0,0.0);
+    vec2 Btor = vec2(0.0,0.0);
     float summed = 0;
     for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
       vec2 diff = vec2(cos(angle),sin(angle));
       float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).r * textureFactor;
       vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
       summed += length(delta) / numSteps;
-      vector += delta;
+      Btor += delta;
     }
-    vec2 targetVelo = vector.xy * velocityFactor;
+    vec2 targetVelo = Btor.xy * velocityFactor;
     vec2 diff = velo - targetVelo;
     velo += diff * summed * dt;
     pos += diff * summed * dt * (posFactor / velocityFactor);
@@ -145,11 +122,11 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 #endif
 ]]
 
-function DynamicBodies:updateBodies(dt)
-  self.uniforms.target = {love.graphics.inverseTransformPoint(love.mouse.getPosition())}
-  self.uniforms.dt = dt
-  self.uniforms.dynamicTex = self.world.dynamic
-  self.uniforms.dynamicTexSize = {self.world.dynamic:getDimensions()}
+function Dynamic:updateBodies(dt)
+  self:setUniform('target', {love.graphics.inverseTransformPoint(love.mouse.getPosition())})
+  self:setUniform('dt', dt)
+  self:setUniform('dynamicTex', self.world.dynamic)
+  self:setUniform('dynamicTexSize', {self.world.dynamic:getDimensions()})
 
   local source = self.canvas
   if self.needupload then
@@ -161,7 +138,7 @@ function DynamicBodies:updateBodies(dt)
     function()
       love.graphics.setBlendMode('replace','premultiplied')
       love.graphics.setShader(self.updateshader)
-      self:_applyUniforms()
+      self:sendUniforms()
       love.graphics.draw(source)
       love.graphics.reset()
     end
@@ -184,7 +161,7 @@ local vertices = {
 local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
 -- updates dynamic image layers
-DynamicBodies.bodyToWorldShader = [[
+Dynamic.bodyToWorldShader = [[
 
 uniform Image bodiesTex;
 uniform vec2  bodiesTexSize;
@@ -193,6 +170,7 @@ uniform float densityOrder;
 varying float v_mass;
 varying float v_radius;
 varying vec2  v_vertex;
+varying vec2  v_velo;
 
 #ifdef VERTEX
 
@@ -208,24 +186,25 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 
   v_radius = radius;
   v_mass = mass;
+  v_velo = velo;
 
   v_vertex = vertex_position.xy;
   vertex_position.xy += vertex_position.xy * v_radius + pos;
   return transform_projection * vertex_position;
 }
 #endif
- 
+
 #ifdef PIXEL
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
-    vec4 texcolor = Texel(tex, texture_coords);
     float distToCenter = length(v_vertex.xy); // <- circle
-    //float distToCenter = max(abs(v_vertex.x),abs(v_vertex.y)); // <- square
     vec4 result = vec4(1,1,1,1);
     float density = (1.0-pow(distToCenter,densityOrder));
     
-    result.rgb *= density * v_mass / MASS_FACTOR;
-    if(all(lessThan(result.rgb, vec3(0,0,0)))) {
+    result.r = density * v_mass / MASS_FACTOR;
+    result.gb = ((v_velo / SPEED_FACTOR * result.r) + vec2(0.5,0.5));
+    result.a = 1-distToCenter;
+    if(result.a <= 0) {
       discard;
     }
     return result;
@@ -233,9 +212,9 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 #endif
 ]]
 
-function DynamicBodies:renderToWorld(world)
+function Dynamic:renderToWorld(world)
   love.graphics.setShader(self.bodyToWorldShader)
-  self:_applyUniforms(self.bodyToWorldShader)
+  self:sendUniforms()
   self.bodyToWorldShader:send('bodiesTex', self.canvas)
   self.bodyToWorldShader:send('bodiesTexSize', {self.data:getDimensions()})
   love.graphics.setBlendMode('lighten','premultiplied')
@@ -247,7 +226,7 @@ end
 
 -- FOR DEBUG ONLY --
 
-function DynamicBodies:drawValues(index, sx, sy)
+function Dynamic:drawValues(index, sx, sy)
   local text = string.format('index=%f\n',index)
   for k,v in ipairs(self.spec) do
     local values = {self.data:getPixel(index,(k-1)/4)}
@@ -256,7 +235,7 @@ function DynamicBodies:drawValues(index, sx, sy)
   love.graphics.print(text,sx,sy)
 end
 
-function DynamicBodies:draw()
+function Dynamic:draw()
   local canvas = self.canvas
   love.graphics.push()
   love.graphics.translate(0,0)
