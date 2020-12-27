@@ -54,6 +54,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
 function MySwarm:init(...)
   Dynamic.init(self, ...)
+  self.ectoshader = self.ectoshader:gsub('PIXELSPEC', self:pixelSpecCode())
   self.ectoshader = love.graphics.newShader(self.shadercommons .. self.ectoshader)
   self.uniforms.heatPalette = love.graphics.newImage('darknesspalette.png')
   self.uniforms.heatPalette:setFilter('nearest','nearest')

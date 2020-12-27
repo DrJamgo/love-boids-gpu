@@ -25,6 +25,7 @@ function Dynamic:init(world, maxbodies)
   self.capacity = maxbodies
   self.updateshader = self.updateshader:gsub('PIXELSPEC', self:pixelSpecCode())
   self.updateshader = love.graphics.newShader(self.shadercommons .. self.updateshader)
+  self.bodyToWorldShader = self.bodyToWorldShader:gsub('PIXELSPEC', self:pixelSpecCode())
   self.bodyToWorldShader = love.graphics.newShader(self.shadercommons .. self.bodyToWorldShader)
 end
 
@@ -180,19 +181,18 @@ varying vec2  v_velo;
 
 #ifdef VERTEX
 
+#define _input_tex bodiesTex
+
 vec4 position( mat4 transform_projection, vec4 vertex_position )
 {
-  float bodiesTexU = float(love_InstanceID) / bodiesTexSize.x;
-  vec4 body0 = Texel(bodiesTex, vec2(bodiesTexU, 0.25));
-  vec4 body1 = Texel(bodiesTex, vec2(bodiesTexU, 0.75));
-  vec2 pos = body0.xy;
-  vec2 velo = body0.zw;
-  float radius = body1.x;
-  float mass = body1.y;
+  float _input_u = float(love_InstanceID) / bodiesTexSize.x;
 
-  v_radius = radius;
-  v_mass = mass;
-  v_velo = velo;
+  PIXELSPEC
+
+  vec2 pos = vec2(_x,_y);
+  v_velo = vec2(_vx,_vy);
+  v_radius = _r;
+  v_mass = _m;
 
   v_vertex = vertex_position.xy;
   vertex_position.xy += vertex_position.xy * v_radius + pos;
