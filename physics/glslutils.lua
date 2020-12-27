@@ -15,8 +15,9 @@ end
 
 PixelSpec = Class()
 
-function PixelSpec:init(identifiers)
+function PixelSpec:init(identifiers, maxbodies)
   self.spec = identifiers
+  self.data = love.image.newImageData(maxbodies, self:pixelSpecHeight(), 'rgba32f')
 end
 
 function PixelSpec:pixelSpecHeight()
@@ -61,9 +62,31 @@ function PixelSpec:pixelSpecCode()
 
   self:forEachChannel(
     function(row, component, name)
+      code = code .. string.format('  #define _out_%s %s\n', name, component)
       code = code .. string.format('  float _%s = _input_row_%d.%s;\n', name, row, component)
     end
   )
 
   return code
+end
+
+function PixelSpec:updatePixels(shader)
+  local source = self.canvas
+  if self.needupload then
+    source = love.graphics.newImage(self.data)
+    self.needupload = nil
+  end
+  local destination = love.graphics.newCanvas(source:getWidth(), source:getHeight(), {format=source:getFormat()})  
+  destination:renderTo(
+    function()
+      love.graphics.setBlendMode('replace','premultiplied')
+      love.graphics.setShader(shader)
+      self:sendUniforms()
+      love.graphics.draw(source)
+      love.graphics.reset()
+    end
+  )
+  destination:setFilter('nearest','nearest')
+  self.canvas = destination
+  self.data = self.canvas:newImageData()
 end

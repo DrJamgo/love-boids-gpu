@@ -16,11 +16,9 @@ Dynamic.uniforms = {
 }
 
 function Dynamic:init(world, maxbodies)
-  PixelSpec.init(self, self.spec)
+  PixelSpec.init(self, self.spec, maxbodies)
 
-  local texHeight = self:pixelSpecHeight()
   self.world = world
-  self.data = love.image.newImageData(maxbodies, texHeight, 'rgba32f')
   self.size = 0
   self.capacity = maxbodies
   self.updateshader = self.updateshader:gsub('PIXELSPEC', self:pixelSpecCode())
@@ -57,8 +55,6 @@ uniform float posFactor;
 uniform float textureFactor;
 uniform float limitVelocity;
 
-uniform vec2 target;
-
 const float numSteps = 32.0;
 
 
@@ -90,21 +86,16 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   if (_output_row == 0) {
     pos += velo * dt;
 
-    vec2 targetDiff = target - pos;
-    targetDiff *= 1000 / length(targetDiff);
-    float f = dt;
-    velo = velo * (1-dt) + targetDiff * dt;
-
-    vec2 Btor = vec2(0.0,0.0);
+    vec2 vector = vec2(0.0,0.0);
     float summed = 0;
     for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
       vec2 diff = vec2(cos(angle),sin(angle));
       float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).r * textureFactor;
       vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
       summed += length(delta) / numSteps;
-      Btor += delta;
+      vector += delta;
     }
-    vec2 targetVelo = Btor.xy * velocityFactor;
+    vec2 targetVelo = vector.xy * velocityFactor;
     vec2 diff = velo - targetVelo;
     velo += diff * summed * dt;
     pos += diff * summed * dt * (posFactor / velocityFactor);
@@ -116,8 +107,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       velo *= limitVelocity / absvelo;
     }
 
-    result.xy = pos;//floor(pos + vec2(0.5,0.5));
-    result.zw = velo;
+    result._out_x = pos.x;
+    result._out_y = pos.y;
+    result._out_vx = velo.x;
+    result._out_vy = velo.y;
   }
   // r,m
   else if(_output_row == 1){
@@ -129,30 +122,12 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 #endif
 ]]
 
-function Dynamic:updateBodies(dt)
-  self:setUniform('target', {love.graphics.inverseTransformPoint(love.mouse.getPosition())})
+function Dynamic:update(dt)
   self:setUniform('dt', dt)
   self:setUniform('dynamicTex', self.world.dynamic)
   self:setUniform('dynamicTexSize', {self.world.dynamic:getDimensions()})
 
-  local source = self.canvas
-  if self.needupload then
-    source = love.graphics.newImage(self.data)
-    self.needupload = nil
-  end
-  local destination = love.graphics.newCanvas(source:getWidth(), source:getHeight(), {format=source:getFormat()})  
-  destination:renderTo(
-    function()
-      love.graphics.setBlendMode('replace','premultiplied')
-      love.graphics.setShader(self.updateshader)
-      self:sendUniforms()
-      love.graphics.draw(source)
-      love.graphics.reset()
-    end
-  )
-  destination:setFilter('nearest','nearest')
-  self.canvas = destination
-  self.data = self.canvas:newImageData()
+  self:updatePixels(self.updateshader)
 end
 
 -- A simple small triangle with the default position, texture coordinate, and color vertex attributes.

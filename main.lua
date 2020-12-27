@@ -48,7 +48,7 @@ function love.update(dt)
   end
 
   for i=1,count do
-    gSwarm:updateBodies(dt * factor)
+    gSwarm:update(dt * factor)
     gSwarm:renderToWorld()
     gWorld:update()
   end
@@ -63,8 +63,6 @@ function love.draw()
   love.graphics.reset()
   love.graphics.push()
   love.graphics.scale(1)
-  --gWorld:draw()
-  --gSwarm:draw()
 
   local canvas2 = love.graphics.newCanvas(canvas:getDimensions())
   love.graphics.setCanvas(canvas2)
@@ -75,10 +73,10 @@ function love.draw()
 
   love.graphics.setCanvas()
   love.graphics.setColor(1,1,1,1)
-  love.graphics.draw(town,0,0,0,1,1)
-  --gSwarm:draw()
+  --love.graphics.draw(town,0,0,0,1,1)
+
   
-  love.graphics.draw(canvas)
+  --love.graphics.draw(canvas)
   love.graphics.pop()
 
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
@@ -88,8 +86,8 @@ function love.draw()
 
   -- debug drawing
   --love.graphics.scale(0.3)
-  --gWorld:draw()
-  --love.graphics.reset()
+  gWorld:draw()
+  love.graphics.reset()
 end
 
 function love.keypressed(key)
