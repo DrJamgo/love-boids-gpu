@@ -14,27 +14,37 @@ gWiggleValues = require 'wiggle'
 require "physics.myswarm"
 require "physics.world"
 
-gWorld = World(love.graphics.getDimensions())
+gWorld = World(love.graphics.getDimensions())--love.graphics.getDimensions())
 gSwarm = MySwarm(gWorld, 2048)
 
 gGame = {
-  time = 0
+  time = 0,
+  pause = false
 }
 
 local canvas = love.graphics.newCanvas(love.graphics.getDimensions())
 
 function love.load()
-  for i = 0, 400 do
+  for i = 0, 200 do
     local r = love.math.random(2,5)
     local mass = math.sqrt(r)
-    gSwarm:addBody({x=love.math.random(0,love.graphics.getWidth()),y=love.math.random(0,love.graphics.getHeight()),m=mass,r=r})
+    gSwarm:addBody({x=love.math.random(0,gWorld.dynamic:getWidth()),y=love.math.random(0,gWorld.dynamic:getHeight()),m=mass,r=r})
   end
+
+  gWiggleValues:add('p', gGame, 'pause')
 end
 local FPS
 local FRAME = 0
 
 function love.update(dt)
+  local f = 0.05
+  FPS = (FPS or (1/f)) * (1-f) + (1/dt) * f
+  FRAME = FRAME + 1
+
   local dt = math.min(dt, 1/30)
+  if gGame.pause then
+    dt = 0
+  end
   gGame.time = gGame.time + dt
   local count = 1
   local factor = 1
@@ -52,9 +62,7 @@ function love.update(dt)
     gSwarm:renderToWorld()
     gWorld:update()
   end
-  local f = 0.05
-  FPS = (FPS or (1/f)) * (1-f) + (1/dt) * f
-  FRAME = FRAME + 1
+
 end
 
 local town = love.graphics.newImage('town.png')
@@ -82,18 +90,21 @@ function love.draw()
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
   love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
 
-  gWiggleValues:draw(love.graphics.getWidth()-300,80,300)
+  gWiggleValues:draw(love.graphics.getWidth()-300,love.graphics.getHeight()-80,300)
 
   -- debug drawing
-  --love.graphics.scale(0.3)
+  love.graphics.replaceTransform(gWorld.transform)
   gWorld:draw()
+  --local unit = gSwarm:read(1)
+  --love.graphics.circle('line', unit.x, unit.y, unit.r)
   love.graphics.reset()
+  --gSwarm:drawValues(1, gWorld.transform:transformPoint(unit.x,unit.y))
 end
 
 function love.keypressed(key)
   gWiggleValues:keypressed(key)
   if key == 'r' then
-    gWorld = World(800,800)
+    gWorld = World(gWorld:getDimensions())
     gSwarm = MySwarm(gWorld, 2048)
     love.load()
   end

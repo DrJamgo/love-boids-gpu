@@ -1,7 +1,9 @@
 require 'physics.dynamic'
 
 MySwarm = Class({__includes={Dynamic}})
-
+MySwarm.uniforms.ruleCohesion = 10
+MySwarm.uniforms.ruleAlignment = 4
+MySwarm.uniforms.ruleSeparation = 300
 
 function MySwarm:init(...)
   Dynamic.init(self, ...)
@@ -14,8 +16,9 @@ function MySwarm:init(...)
   self.uniforms.densityOrderHeat = 1
   self.uniforms.heatTest = 1
 
-  gWiggleValues:add('d', self.uniforms, 'densityOrderHeat')
-  gWiggleValues:add('h', self.uniforms, 'heatTest')
+  gWiggleValues:add('c', self.uniforms, 'ruleCohesion')
+  gWiggleValues:add('a', self.uniforms, 'ruleAlignment')
+  gWiggleValues:add('s', self.uniforms, 'ruleSeparation')
 end
 
 -- A simple small triangle with the default position, texture coordinate, and color vertex attributes.
@@ -35,6 +38,10 @@ uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
 uniform float dt;
 uniform vec2 target;
+
+uniform float ruleCohesion;
+uniform float ruleAlignment;
+uniform float ruleSeparation;
 
 #ifdef VERTEX
 vec4 position( mat4 transform_projection, vec4 vertex_position )
@@ -62,10 +69,61 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
   // x,y,vx,vy
   if (_output_row == 0) {
-    vec2 targetDiff = target - pos;
-    targetDiff *= 1000 / length(targetDiff);
+    vec2 targetDiff = vec2(0,0);
+    //if(screen_coords.x == 1.5 && all(greaterThan(target, vec2(0,0)))) {
+    if(all(greaterThan(target, vec2(0,0)))) {
+      // has target
+      targetDiff = target - pos;
+    }
+    else {
+      float v = length(velo);
+      if(v == 0) {
+        targetDiff = -pos;
+      }
+      else {
+        targetDiff = (velo / v) * 50;
+      }
+    }
+    
     float f = dt;
     velo = velo * (1-dt) + targetDiff * dt;
+
+    const int sight = 50;
+    const int step = 5;
+
+    vec2 vecSeparation = vec2(0,0);
+    vec2 vecCohesion = vec2(0,0);
+    vec2 vecAlignment = vec2(0,0);
+    int count = 0;
+
+    for(int x = -sight; x <= sight; x+=step) {
+      for(int y = -sight; y <= sight; y+=step) {
+        vec2 dv = vec2(float(x),float(y));
+        if (min(abs(x),abs(y)) > radius+2) {
+          float weight = radius / length(dv);
+          vec4 dynamic = Texel(dynamicTex, (pos + dv) / dynamicTexSize);
+          if (dynamic.a > 0) {
+            vec2 velocity = (dynamic.gb - vec2(0.45,0.45)) * SPEED_FACTOR;
+            vecAlignment += velocity;
+            vecCohesion += dv;
+            if(length(dv) < sight/2) {
+              vecSeparation += -dv;
+            }
+            count++;
+          }
+        }
+      } 
+    }
+
+    if(count > 0) {
+      vecCohesion /= float(count);
+      vecAlignment /= float(count);
+      vecSeparation /= float(count);
+
+      velo += vecCohesion * ruleCohesion * dt;
+      velo += vecSeparation * ruleSeparation * dt;
+      velo += vecAlignment * ruleAlignment * dt;
+    }
 
     result._out_x = pos.x;
     result._out_y = pos.y;
@@ -84,7 +142,11 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
 function MySwarm:update(dt)
   Dynamic.update(self, dt)
-  self:setUniform('target', {love.graphics.inverseTransformPoint(love.mouse.getPosition())})
+  if love.mouse.isDown(1) then
+    self:setUniform('target', {self.world.transform:inverseTransformPoint(love.mouse.getPosition())})
+  else
+    self:setUniform('target', {-1,-1})
+  end
   self:updatePixels(self.behaviourshader)
 end
 

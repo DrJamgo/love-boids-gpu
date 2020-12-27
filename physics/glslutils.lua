@@ -90,3 +90,12 @@ function PixelSpec:updatePixels(shader)
   self.canvas = destination
   self.data = self.canvas:newImageData()
 end
+
+function PixelSpec:drawValues(index, sx, sy)
+  local text = string.format('index=%f\n',index)
+  for k,v in ipairs(self.spec) do
+    local values = {self.data:getPixel(index,(k-1)/4)}
+    text = text..string.format('%s=%.2f\n',v,values[(k-1)%4+1])
+  end
+  love.graphics.print(text,sx,sy)
+end

@@ -26,7 +26,12 @@ function Wiggle:draw(x, y, width, align)
     if type(v) == 'table' then
       local t = self[k].table
       local name = self[k].value
-      love.graphics.printf(string.format('[%s] %s=%.1f',k,name,t[name]),x, y, width, align or 'right')
+      local value = t[name]
+      if type(value) == 'number' then
+        love.graphics.printf(string.format('[%s] %s=%.3f',k,name,value),x, y, width, align or 'right')
+      else
+        love.graphics.printf(string.format('[%s] %s=%s',k,name,tostring(value)),x, y, width, align or 'right')
+      end
       y = y + 20
     end
   end

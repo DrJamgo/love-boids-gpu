@@ -100,6 +100,14 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     velo += diff * summed * dt;
     pos += diff * summed * dt * (posFactor / velocityFactor);
 
+
+    if(pos.x < radius || pos.x > dynamicTexSize.x-radius) {
+      velo.x = 0;
+    }
+    if(pos.y < radius || pos.y > dynamicTexSize.y-radius) {
+      velo.y = 0;
+    }
+
     pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
 
     float absvelo = length(velo);
@@ -176,6 +184,9 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 #endif
 
 #ifdef PIXEL
+
+const vec2 offset = vec2(1,1) * 0.5 + 0.5/255;
+
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
     float distToCenter = length(v_vertex.xy); // <- circle
@@ -183,7 +194,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     float density = (1.0-pow(distToCenter,densityOrder));
     
     result.r = density * v_mass / MASS_FACTOR;
-    result.gb = ((v_velo / SPEED_FACTOR * result.r) + vec2(0.5,0.5));
+    result.gb = ((v_velo / SPEED_FACTOR) + offset);
     result.a = 1-distToCenter;
     if(result.a <= 0) {
       discard;
@@ -206,15 +217,6 @@ function Dynamic:renderToWorld(world)
 end
 
 -- FOR DEBUG ONLY --
-
-function Dynamic:drawValues(index, sx, sy)
-  local text = string.format('index=%f\n',index)
-  for k,v in ipairs(self.spec) do
-    local values = {self.data:getPixel(index,(k-1)/4)}
-    text = text..string.format('%s=%.2f\n',v,values[(k-1)%4+1])
-  end
-  love.graphics.print(text,sx,sy)
-end
 
 function Dynamic:draw()
   local canvas = self.canvas
