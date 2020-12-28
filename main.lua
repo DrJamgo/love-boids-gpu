@@ -25,7 +25,7 @@ gGame = {
 local canvas = love.graphics.newCanvas(love.graphics.getDimensions())
 
 function love.load()
-  for i = 0, 200 do
+  for i = 0, 2000 do
     local r = love.math.random(2,5)
     local mass = math.sqrt(r)
     gSwarm:addBody({x=love.math.random(20,gWorld.dynamic:getWidth()-20),y=love.math.random(20,gWorld.dynamic:getHeight()-20),m=mass,r=r})
@@ -87,18 +87,20 @@ function love.draw()
   --love.graphics.draw(canvas)
   love.graphics.pop()
 
+    -- debug drawing
+  love.graphics.replaceTransform(gWorld.transform)
+  gWorld:draw()
+  local unit = gSwarm:read(1)
+  love.graphics.circle('line', unit.x, unit.y, unit.r)
+  love.graphics.reset()
+  gSwarm:drawValues(1, gWorld.transform:transformPoint(unit.x,unit.y))
+
   love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
   love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
 
   gWiggleValues:draw(love.graphics.getWidth()-300,love.graphics.getHeight()-80,300)
 
-  -- debug drawing
-  love.graphics.replaceTransform(gWorld.transform)
-  gWorld:draw()
-  --local unit = gSwarm:read(1)
-  --love.graphics.circle('line', unit.x, unit.y, unit.r)
-  love.graphics.reset()
-  --gSwarm:drawValues(1, gWorld.transform:transformPoint(unit.x,unit.y))
+
 end
 
 function love.keypressed(key)

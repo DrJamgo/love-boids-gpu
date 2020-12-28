@@ -6,7 +6,7 @@ function World:init(width, height, maxspeed, maxmass)
   self.transform = love.math.newTransform(0,0,0,1)
 end
 
-local testimage = love.graphics.newImage('test.png')
+local testimage = love.graphics.newImage('test2.png')
 
 function World:update()
   self.dynamic = nil
@@ -18,13 +18,16 @@ function World:update()
       love.graphics.clear(0,0,0,0)
       local w,h = self:getDimensions()
       local d = 10
+      love.graphics.setBlendMode('replace','premultiplied')
+      love.graphics.setColor(0,0.5,0.5,1)
+      love.graphics.draw(testimage)
       love.graphics.rectangle('fill',0,0,d,h)
       love.graphics.rectangle('fill',w-d,0,d,h)
       love.graphics.rectangle('fill',0,0,w,d)
       love.graphics.rectangle('fill',0,h-d,w,d)
-      --love.graphics.draw(testimage)
     end
   )
+  love.graphics.reset()
 end
 
 function World:getDimensions()

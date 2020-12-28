@@ -90,7 +90,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     float summed = 0;
     for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
       vec2 diff = vec2(cos(angle),sin(angle));
-      float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).r * textureFactor;
+      float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).a * textureFactor;
       vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
       summed += length(delta) / numSteps;
       vector += delta;
@@ -193,10 +193,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     vec4 result = vec4(1,1,1,1);
     float density = (1.0-pow(distToCenter,densityOrder));
     
-    result.r = density * v_mass / MASS_FACTOR;
+    result.a = density * v_mass / MASS_FACTOR;
     result.gb = ((v_velo / SPEED_FACTOR) + offset);
-    result.a = 1-distToCenter;
-    if(result.a <= 0) {
+    result.r = 1-distToCenter;
+    if(result.r <= 0) {
       discard;
     }
     return result;

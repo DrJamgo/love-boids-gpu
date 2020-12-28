@@ -1,8 +1,8 @@
 require 'physics.dynamic'
 
 MySwarm = Class({__includes={Dynamic}})
-MySwarm.uniforms.ruleCohesion = 10
-MySwarm.uniforms.ruleAlignment = 4
+MySwarm.uniforms.ruleCohesion = 5
+MySwarm.uniforms.ruleAlignment = 1
 MySwarm.uniforms.ruleSeparation = 300
 
 function MySwarm:init(...)
@@ -75,16 +75,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       // has target
       targetDiff = target - pos;
     }
-    else {
-      float v = length(velo);
-      if(v == 0) {
-        targetDiff = -pos;
-      }
-      else {
-        targetDiff = (velo / v) * 50;
-      }
-    }
-    
+
+    float v = length(velo);
+    velo *= pow(0.1, dt);
+
     float f = dt;
     velo = velo * (1-dt) + targetDiff * dt;
 
@@ -102,14 +96,24 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
         if (min(abs(x),abs(y)) > radius+1) {
           float weight = radius / length(dv);
           vec4 dynamic = Texel(dynamicTex, (pos + dv) / dynamicTexSize);
-          if (dynamic.a > 0) {
+
+          float repelFactor = 1.0;
+          // my boids
+          if (dynamic.r > 0) {
             vec2 velocity = (dynamic.gb - vec2(0.45,0.45)) * SPEED_FACTOR;
             vecAlignment += velocity;
             vecCohesion += dv;
-            if(length(dv) < sight/2) {
-              vecSeparation += -dv;
-            }
+            //repelFactor = pow(1.0-dot(normalize(velo), normalize(velocity)),2);
             count++;
+          }
+          else {
+            repelFactor *= 5.0;
+          }
+          if (dynamic.a > 0) {
+            float l = length(dv);
+            if(l < sight) {
+              vecSeparation += -normalize(dv) * repelFactor * pow(l/sight,1.5);
+            }
           }
         }
       } 
