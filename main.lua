@@ -25,12 +25,6 @@ gGame = {
 local canvas = love.graphics.newCanvas(love.graphics.getDimensions())
 
 function love.load()
-  for i = 0, 400 do
-    local r = love.math.random(2,5)
-    local mass = math.sqrt(r)
-    --gSwarm:addBody({x=love.math.random(20,gWorld.dynamic:getWidth()-20),y=love.math.random(20,gWorld.dynamic:getHeight()-20),m=mass,r=r})
-  end
-
   gWiggleValues:add('p', gGame, 'pause')
 end
 local FPS
@@ -57,22 +51,22 @@ function love.update(dt)
     count = (FRAME % 2 == 0) and 1 or 0
   end
 
-  for i=1,count do
-    gSwarm:update(dt * factor)
-    gSwarm:renderToWorld()
-    gWorld:update()
-  end
-
-
   local r = love.math.random(2,5)
   local mass = math.sqrt(r)
   if love.mouse.isDown(2) then
     local x,y = gWorld.transform:inverseTransformPoint(love.mouse.getPosition())
     gSwarm:addBody({x=x,y=y,m=mass,r=r})
-  else
-    gSwarm:addBody({x=200,y=200,m=mass,r=r})
+  elseif not gGame.pause then
+    if gSwarm.size < 400 then
+      gSwarm:addBody({x=200+love.math.random(-1,1),y=200+love.math.random(-1,1),m=mass,r=r})
+    end
   end
 
+  for i=1,count do
+    gSwarm:update(dt * factor)
+    gSwarm:renderToWorld()
+    gWorld:update()
+  end
 end
 
 local town = love.graphics.newImage('town.png')

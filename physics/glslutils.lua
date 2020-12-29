@@ -19,6 +19,8 @@ function PixelSpec:init(identifiers, maxbodies)
   self.spec = identifiers
   self.data = love.image.newImageData(maxbodies, self:pixelSpecHeight(), 'rgba32f')
   self.needupload = true
+  self.size = 0
+  self.capacity = maxbodies
 end
 
 function PixelSpec:pixelSpecHeight()
@@ -83,6 +85,7 @@ function PixelSpec:updatePixels(shader)
       love.graphics.setBlendMode('replace','premultiplied')
       love.graphics.setShader(shader)
       self:sendUniforms()
+      love.graphics.setScissor(0,0,self.size+1,source:getHeight())
       love.graphics.draw(source)
       love.graphics.reset()
     end

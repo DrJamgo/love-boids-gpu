@@ -1,9 +1,9 @@
 require 'physics.dynamic'
 
 Boids = Class({__includes={Dynamic}})
-Boids.uniforms.ruleCohesion = 10
+Boids.uniforms.ruleSeparation = 2000
 Boids.uniforms.ruleAlignment = 10
-Boids.uniforms.ruleSeparation = 10
+Boids.uniforms.ruleCohesion = 30
 
 function Boids:init(...)
   Dynamic.init(self, ...)
@@ -88,47 +88,49 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     vec2 vecSeparation = vec2(0,0);
     vec2 vecCohesion = vec2(0,0);
     vec2 vecAlignment = vec2(0,0);
-    int count = 0;
+    float sumSeperation = 0;
+    float sumCohesion = 0;
+    float sumAlignment = 0;
 
     for(int x = -sight; x <= sight; x+=step) {
       for(int y = -sight; y <= sight; y+=step) {
-        vec2 dv = vec2(float(x),float(y));
+        vec2 dv = vec2(float(x),float(y)) + velo/4;
         if (min(abs(x),abs(y)) > radius+1) {
-          float weight = radius / length(dv);
           vec4 dynamic = Texel(dynamicTex, (pos + dv) / dynamicTexSize);
 
-          float repelFactor = 1.0;
           // my boids
           if (dynamic.r > 0) {
             vec2 velocity = (dynamic.gb - vec2(0.45,0.45)) * SPEED_FACTOR;
-            vecAlignment += velocity;
             vecCohesion += dv;
-            repelFactor = pow(1.0-dot(normalize(velo), normalize(velocity)),2);
-            count++;
-          }
-          else {
-            repelFactor *= 5.0;
+            vecAlignment += velocity;
+            sumCohesion++;
+            sumAlignment++;
           }
           if (dynamic.a > 0) {
             float l = length(dv);
             if(l < sight) {
-              vecSeparation += -normalize(dv) * repelFactor * pow(sight-l,1.5);
+              float f = pow((sight)-l/3,1.5);
+              sumSeperation += f;
+              vecSeparation += -normalize(dv) * f;
             }
           }
         }
       } 
     }
 
-    if(count > 0) {
-      vecCohesion /= float(count);
-      vecAlignment /= float(count);
-      vecSeparation /= float(count);
-
-      velo += vecCohesion * ruleCohesion * dt;
+    if(sumSeperation > 0) {
+      vecSeparation /= sumSeperation;
       velo += vecSeparation * ruleSeparation * dt;
+    }
+    if(sumCohesion > 0) {
+      vecCohesion /= sumCohesion;
+      velo += vecCohesion * ruleCohesion * dt;
+    }
+    if(sumAlignment > 0) {
+      vecAlignment /= sumAlignment;
       velo += vecAlignment * ruleAlignment * dt;
     }
-
+    
     result._out_x = pos.x;
     result._out_y = pos.y;
     result._out_vx = velo.x;

@@ -17,10 +17,7 @@ Dynamic.uniforms = {
 
 function Dynamic:init(world, maxbodies)
   PixelSpec.init(self, self.spec, maxbodies)
-
   self.world = world
-  self.size = 0
-  self.capacity = maxbodies
   self.updateshader = self.updateshader:gsub('PIXELSPEC', self:pixelSpecCode())
   self.updateshader = love.graphics.newShader(self.shadercommons .. self.updateshader)
   self.bodyToWorldShader = self.bodyToWorldShader:gsub('PIXELSPEC', self:pixelSpecCode())
@@ -58,7 +55,6 @@ uniform float textureFactor;
 uniform float limitVelocity;
 
 const float numSteps = 32.0;
-
 
 #ifdef VERTEX
 vec4 position( mat4 transform_projection, vec4 vertex_position )
@@ -101,7 +97,6 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     vec2 diff = velo - targetVelo;
     velo += diff * summed * dt;
     pos += diff * summed * dt * (posFactor / velocityFactor);
-
 
     if(pos.x < radius || pos.x > dynamicTexSize.x-radius) {
       velo.x = 0;
