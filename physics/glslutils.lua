@@ -18,6 +18,7 @@ PixelSpec = Class()
 function PixelSpec:init(identifiers, maxbodies)
   self.spec = identifiers
   self.data = love.image.newImageData(maxbodies, self:pixelSpecHeight(), 'rgba32f')
+  self.needupload = true
 end
 
 function PixelSpec:pixelSpecHeight()
