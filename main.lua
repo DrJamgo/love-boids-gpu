@@ -28,7 +28,7 @@ function love.load()
   for i = 0, 400 do
     local r = love.math.random(2,5)
     local mass = math.sqrt(r)
-    gSwarm:addBody({x=love.math.random(20,gWorld.dynamic:getWidth()-20),y=love.math.random(20,gWorld.dynamic:getHeight()-20),m=mass,r=r})
+    --gSwarm:addBody({x=love.math.random(20,gWorld.dynamic:getWidth()-20),y=love.math.random(20,gWorld.dynamic:getHeight()-20),m=mass,r=r})
   end
 
   gWiggleValues:add('p', gGame, 'pause')
@@ -61,6 +61,16 @@ function love.update(dt)
     gSwarm:update(dt * factor)
     gSwarm:renderToWorld()
     gWorld:update()
+  end
+
+
+  local r = love.math.random(2,5)
+  local mass = math.sqrt(r)
+  if love.mouse.isDown(2) then
+    local x,y = gWorld.transform:inverseTransformPoint(love.mouse.getPosition())
+    gSwarm:addBody({x=x,y=y,m=mass,r=r})
+  else
+    gSwarm:addBody({x=200,y=200,m=mass,r=r})
   end
 
 end
@@ -107,7 +117,7 @@ function love.keypressed(key)
   gWiggleValues:keypressed(key)
   if key == 'r' then
     gWorld = World(gWorld:getDimensions())
-    gSwarm = MySwarm(gWorld, 2048)
+    gSwarm = Boids(gWorld, 2048)
     love.load()
   end
 end

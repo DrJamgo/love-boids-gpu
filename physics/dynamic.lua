@@ -28,9 +28,11 @@ function Dynamic:init(world, maxbodies)
 end
 
 function Dynamic:addBody(body)
-  self.size = self.size + 1
-  self:write(self.size, body)
-  self.needupload = true
+  if self.size < self.capacity-1 then
+    self.size = self.size + 1
+    self:write(self.size, body)
+    self.needupload = true
+  end
 end
 
 Dynamic.MASS_FACTOR = 255 / math.pow(10,2)

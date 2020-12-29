@@ -3,7 +3,7 @@ require 'physics.dynamic'
 Boids = Class({__includes={Dynamic}})
 Boids.uniforms.ruleCohesion = 10
 Boids.uniforms.ruleAlignment = 10
-Boids.uniforms.ruleSeparation = 700
+Boids.uniforms.ruleSeparation = 10
 
 function Boids:init(...)
   Dynamic.init(self, ...)
@@ -103,7 +103,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
             vec2 velocity = (dynamic.gb - vec2(0.45,0.45)) * SPEED_FACTOR;
             vecAlignment += velocity;
             vecCohesion += dv;
-            //repelFactor = pow(1.0-dot(normalize(velo), normalize(velocity)),2);
+            repelFactor = pow(1.0-dot(normalize(velo), normalize(velocity)),2);
             count++;
           }
           else {
@@ -112,7 +112,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
           if (dynamic.a > 0) {
             float l = length(dv);
             if(l < sight) {
-              vecSeparation += -normalize(dv) * repelFactor * pow(l/sight,1.5);
+              vecSeparation += -normalize(dv) * repelFactor * pow(sight-l,1.5);
             }
           }
         }
