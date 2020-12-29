@@ -11,11 +11,11 @@ end
 Class = require "hump.class" 
 gWiggleValues = require 'wiggle'
 
-require "physics.myswarm"
+require "physics.boids"
 require "physics.world"
 
 gWorld = World(love.graphics.getDimensions())--love.graphics.getDimensions())
-gSwarm = MySwarm(gWorld, 2048)
+gSwarm = Boids(gWorld, 2048)
 
 gGame = {
   time = 0,
@@ -25,7 +25,7 @@ gGame = {
 local canvas = love.graphics.newCanvas(love.graphics.getDimensions())
 
 function love.load()
-  for i = 0, 2000 do
+  for i = 0, 400 do
     local r = love.math.random(2,5)
     local mass = math.sqrt(r)
     gSwarm:addBody({x=love.math.random(20,gWorld.dynamic:getWidth()-20),y=love.math.random(20,gWorld.dynamic:getHeight()-20),m=mass,r=r})
@@ -74,7 +74,7 @@ function love.draw()
 
   local canvas2 = love.graphics.newCanvas(canvas:getDimensions())
   love.graphics.setCanvas(canvas2)
-  love.graphics.setColor(1,1,1,0.95)
+  love.graphics.setColor(1,1,1,0.99)
   love.graphics.draw(canvas)
   gSwarm:draw()
   canvas = canvas2
@@ -84,7 +84,7 @@ function love.draw()
   --love.graphics.draw(town,0,0,0,1,1)
 
   
-  --love.graphics.draw(canvas)
+  love.graphics.draw(canvas)
   love.graphics.pop()
 
     -- debug drawing

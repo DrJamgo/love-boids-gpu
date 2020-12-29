@@ -1,11 +1,11 @@
 require 'physics.dynamic'
 
-MySwarm = Class({__includes={Dynamic}})
-MySwarm.uniforms.ruleCohesion = 5
-MySwarm.uniforms.ruleAlignment = 1
-MySwarm.uniforms.ruleSeparation = 300
+Boids = Class({__includes={Dynamic}})
+Boids.uniforms.ruleCohesion = 10
+Boids.uniforms.ruleAlignment = 10
+Boids.uniforms.ruleSeparation = 700
 
-function MySwarm:init(...)
+function Boids:init(...)
   Dynamic.init(self, ...)
   self.behaviourshader = self.behaviourshader:gsub('PIXELSPEC', self:pixelSpecCode())
   self.behaviourshader = love.graphics.newShader(self.shadercommons .. self.behaviourshader)
@@ -32,7 +32,7 @@ local vertices = {
 }
 local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
-MySwarm.behaviourshader = [[
+Boids.behaviourshader = [[
 
 uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
@@ -144,7 +144,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 #endif
 ]]
 
-function MySwarm:update(dt)
+function Boids:update(dt)
   Dynamic.update(self, dt)
   if love.mouse.isDown(1) then
     self:setUniform('target', {self.world.transform:inverseTransformPoint(love.mouse.getPosition())})
@@ -154,7 +154,7 @@ function MySwarm:update(dt)
   self:updatePixels(self.behaviourshader)
 end
 
-MySwarm.ectoshader = [[
+Boids.ectoshader = [[
 
 uniform Image bodiesTex;
 uniform Image heatPalette;
@@ -204,7 +204,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 #endif
 ]]
 
-function MySwarm:draw()
+function Boids:draw()
   love.graphics.setShader(self.ectoshader)
   self:sendUniforms()
   self.ectoshader:send('bodiesTex', self.canvas)

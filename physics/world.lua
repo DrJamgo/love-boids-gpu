@@ -1,12 +1,14 @@
 
 World = Class()
+local testimage = love.graphics.newImage('test3.png')
+
+
 function World:init(width, height, maxspeed, maxmass)
-  self.dynamic = love.graphics.newCanvas(width, height)
-  self.target = love.graphics.newCanvas(width, height)
+  self.dynamic = love.graphics.newCanvas(testimage:getDimensions())
+  self.target = love.graphics.newCanvas(testimage:getDimensions())
   self.transform = love.math.newTransform(0,0,0,1)
 end
 
-local testimage = love.graphics.newImage('test2.png')
 
 function World:update()
   self.dynamic = nil
