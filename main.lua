@@ -62,8 +62,6 @@ function love.update(dt)
   gWorld:update()
 end
 
-local town = love.graphics.newImage('town.png')
-
 function love.draw()
   love.graphics.reset()
   love.graphics.push()
