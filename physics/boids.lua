@@ -10,8 +10,8 @@ table.insert(Boids.channels, 'hp')
 
 function Boids:init(...)
   Dynamic.init(self, ...)
-  self.behaviourshader = self:makeProgram(Dynamic.shadercommons..self.behaviourshader)
-  self.visualshader = self:makeProgram(Dynamic.shadercommons..self.visualshader)
+  self.behaviourshader = self:makeProgram(self.behaviourshader)
+  self.visualshader = self:makeProgram(self.visualshader)
 
   self.uniforms.palette = love.graphics.newImage('palette.png')
   self.uniforms.palette:setFilter('nearest','nearest')
@@ -34,11 +34,16 @@ local vertices = {
 }
 local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
-Boids.behaviourshader = [[
+Boids.behaviourshader = 
+Dynamic.glslcommons..
+[[
 
 uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
 uniform float dt;
+]]..
+Dynamic.glslfunc_run_update..
+[[
 uniform vec2 target;
 
 uniform int sight;
@@ -118,6 +123,8 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       velo += vecAlignment * ruleAlignment * dt;
     }
 
+    run_update(pos, velo, radius);
+
     result._out_x = pos.x;
     result._out_y = pos.y;
     result._out_vx = velo.x;
@@ -134,7 +141,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 ]]
 
 function Boids:update(dt)
-  Dynamic.update(self, dt)
+  self:setUniform('dt', dt)
+  self:setUniform('dynamicTex', self.world.dynamic)
+  self:setUniform('dynamicTexSize', {self.world.dynamic:getDimensions()})
+
   if love.mouse.isDown(1) then
     self:setUniform('target', {love.graphics.inverseTransformPoint(love.mouse.getPosition())})
   else
@@ -143,7 +153,9 @@ function Boids:update(dt)
   self:updatePixels(self.behaviourshader)
 end
 
-Boids.visualshader = [[
+Boids.visualshader = 
+Dynamic.glslcommons..
+[[
 
 uniform Image bodiesTex;
 uniform Image palette;

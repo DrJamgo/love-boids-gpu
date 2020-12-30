@@ -63,27 +63,29 @@ void run_colisions(inout vec2 pos, inout vec2 velo, in float radius)
   vec2 diff = velo - targetVelo;
   velo += diff * summed * dt;
   pos += diff * summed * dt * (posFactor / velocityFactor);
+}
+]]
 
+Dynamic.glslfunc_run_update = [[
+uniform float limitVelocity;
+
+void run_update(inout vec2 pos, inout vec2 velo, in float radius)
+{
   if(pos.x < radius || pos.x > dynamicTexSize.x-radius) {
     velo.x = 0;
   }
   if(pos.y < radius || pos.y > dynamicTexSize.y-radius) {
     velo.y = 0;
   }
-}
-]]
 
-Dynamic.glslfunc_limit_pos_velo = [[
-uniform float limitVelocity;
-
-void limit_pos_velo(inout vec2 pos, inout vec2 velo, in float radius)
-{
   pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
 
   float absvelo = length(velo);
   if(absvelo > limitVelocity) {
     velo *= limitVelocity / absvelo;
   }
+
+  pos += velo * dt;
 }
 ]]
 
@@ -96,7 +98,7 @@ uniform vec2  dynamicTexSize;
 uniform float dt;
 ]]..
 Dynamic.glslfunc_run_colision..
-Dynamic.glslfunc_limit_pos_velo..
+Dynamic.glslfunc_run_update..
 [[
 
 #ifdef VERTEX
@@ -127,7 +129,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
   // x,y,vx,vy
   if (_output_row == 0) {
     run_colisions(pos, velo, radius);
-    limit_pos_velo(pos, velo, radius);
+    run_update(pos, velo, radius);
     pos += velo * dt;
 
     result._out_x = pos.x;
