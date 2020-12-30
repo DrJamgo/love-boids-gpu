@@ -92,3 +92,7 @@ function love.draw()
   love.graphics.printf(string.format('FPS: %.1f',FPS),10,120,200,'left',0,1.5)
   gWiggleValues:draw(10,love.graphics.getHeight()-100,300)
 end
+
+function love.keypressed(key)
+  gWiggleValues:keypressed(key)
+end
