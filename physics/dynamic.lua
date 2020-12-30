@@ -1,8 +1,8 @@
 
 require 'physics.glslutils'
 
-Dynamic = Class({__includes={Uniforms, PixelSpec}})
-Dynamic.spec = {
+Dynamic = Class({__includes={Uniforms, FragmentProgram}})
+Dynamic.channels = {
   'x','y','vx','vy',
   'r','m'}
 
@@ -16,12 +16,10 @@ Dynamic.uniforms = {
 }
 
 function Dynamic:init(world, maxbodies)
-  PixelSpec.init(self, self.spec, maxbodies)
+  FragmentProgram.init(self, self.channels, maxbodies)
   self.world = world
-  self.updateshader = self.updateshader:gsub('PIXELSPEC', self:pixelSpecCode())
-  self.updateshader = love.graphics.newShader(self.shadercommons .. self.updateshader)
-  self.bodyToWorldShader = self.bodyToWorldShader:gsub('PIXELSPEC', self:pixelSpecCode())
-  self.bodyToWorldShader = love.graphics.newShader(self.shadercommons .. self.bodyToWorldShader)
+  self.updateshader = self:makeProgram(self.updateshader)
+  self.bodyToWorldShader = self:makeProgram(self.bodyToWorldShader)
 end
 
 function Dynamic:addBody(body)
@@ -35,7 +33,7 @@ end
 Dynamic.MASS_FACTOR = 255 / math.pow(10,2)
 Dynamic.SPEED_FACTOR = Dynamic.uniforms.limitVelocity * 2
 
-Dynamic.shadercommons = [[
+Dynamic.glslcommons = [[
   #pragma language glsl3
   
   #define M_PI 3.1415926535897932384626433832795
@@ -43,17 +41,63 @@ Dynamic.shadercommons = [[
   const float SPEED_FACTOR = ]]..Dynamic.SPEED_FACTOR..[[;
 ]]
 
--- controlls behaviour of body
-Dynamic.updateshader = [[
-uniform Image dynamicTex;
-uniform vec2  dynamicTexSize;
-uniform float dt;
+Dynamic.glslfunc_run_colision = [[
 uniform float velocityFactor;
 uniform float posFactor;
 uniform float textureFactor;
-uniform float limitVelocity;
 
 const float numSteps = 32.0;
+
+void run_colisions(inout vec2 pos, inout vec2 velo, in float radius)
+{
+  vec2 vector = vec2(0.0,0.0);
+  float summed = 0;
+  for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
+    vec2 diff = vec2(cos(angle),sin(angle));
+    float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).a * textureFactor;
+    vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
+    summed += length(delta) / numSteps;
+    vector += delta;
+  }
+  vec2 targetVelo = vector.xy * velocityFactor;
+  vec2 diff = velo - targetVelo;
+  velo += diff * summed * dt;
+  pos += diff * summed * dt * (posFactor / velocityFactor);
+
+  if(pos.x < radius || pos.x > dynamicTexSize.x-radius) {
+    velo.x = 0;
+  }
+  if(pos.y < radius || pos.y > dynamicTexSize.y-radius) {
+    velo.y = 0;
+  }
+}
+]]
+
+Dynamic.glslfunc_limit_pos_velo = [[
+uniform float limitVelocity;
+
+void limit_pos_velo(inout vec2 pos, inout vec2 velo, in float radius)
+{
+  pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
+
+  float absvelo = length(velo);
+  if(absvelo > limitVelocity) {
+    velo *= limitVelocity / absvelo;
+  }
+}
+]]
+
+-- controlls behaviour of body
+Dynamic.updateshader = 
+Dynamic.glslcommons..
+[[
+uniform Image dynamicTex;
+uniform vec2  dynamicTexSize;
+uniform float dt;
+]]..
+Dynamic.glslfunc_run_colision..
+Dynamic.glslfunc_limit_pos_velo..
+[[
 
 #ifdef VERTEX
 vec4 position( mat4 transform_projection, vec4 vertex_position )
@@ -70,7 +114,8 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
-  PIXELSPEC
+  // This line will be replaced by auto-code
+  DECLARE_CHANNELS
 
   vec2 pos = vec2(_x,_y);
   vec2 velo = vec2(_vx,_vy);
@@ -81,35 +126,9 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
   // x,y,vx,vy
   if (_output_row == 0) {
+    run_colisions(pos, velo, radius);
+    limit_pos_velo(pos, velo, radius);
     pos += velo * dt;
-
-    vec2 vector = vec2(0.0,0.0);
-    float summed = 0;
-    for(float angle = -M_PI; angle < M_PI; angle += M_PI*2/numSteps) {
-      vec2 diff = vec2(cos(angle),sin(angle));
-      float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).a * textureFactor;
-      vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
-      //summed += length(delta) / numSteps;
-      vector += delta;
-    }
-    vec2 targetVelo = vector.xy * velocityFactor;
-    vec2 diff = velo - targetVelo;
-    velo += diff * summed * dt;
-    pos += diff * summed * dt * (posFactor / velocityFactor);
-
-    if(pos.x < radius || pos.x > dynamicTexSize.x-radius) {
-      velo.x = 0;
-    }
-    if(pos.y < radius || pos.y > dynamicTexSize.y-radius) {
-      velo.y = 0;
-    }
-
-    pos = clamp(pos, vec2(radius,radius), dynamicTexSize - vec2(radius,radius));
-
-    float absvelo = length(velo);
-    if(absvelo > limitVelocity) {
-      velo *= limitVelocity / absvelo;
-    }
 
     result._out_x = pos.x;
     result._out_y = pos.y;
@@ -147,8 +166,9 @@ local vertices = {
 local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
 -- updates dynamic image layers
-Dynamic.bodyToWorldShader = [[
-
+Dynamic.bodyToWorldShader = 
+Dynamic.glslcommons..
+[[
 uniform Image bodiesTex;
 uniform vec2  bodiesTexSize;
 uniform float densityOrder;
@@ -166,7 +186,8 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 {
   float _input_u = float(love_InstanceID) / bodiesTexSize.x;
 
-  PIXELSPEC
+  // This line will be replaced by auto-code
+  DECLARE_CHANNELS
 
   vec2 pos = vec2(_x,_y);
   v_velo = vec2(_vx,_vy);

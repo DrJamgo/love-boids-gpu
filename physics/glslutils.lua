@@ -13,42 +13,47 @@ function Uniforms:sendUniforms()
   end
 end
 
-PixelSpec = Class()
-function PixelSpec:init(identifiers, maxbodies)
-  self.spec = identifiers
-  self.data = love.image.newImageData(maxbodies, self:pixelSpecHeight(), 'rgba32f')
+FragmentProgram = Class()
+function FragmentProgram:init(channels, maxbodies)
+  self.channels = channels
+  self.data = love.image.newImageData(maxbodies, self:FragmentProgramHeight(), 'rgba32f')
   self.needupload = true
   self.size = 0
   self.capacity = maxbodies
 end
 
-function PixelSpec:pixelSpecHeight()
-  return math.ceil(#self.spec / 4)
+function FragmentProgram:makeProgram(shadercode)
+  code = shadercode:gsub('DECLARE_CHANNELS', self:getDeclareChannels())
+  return love.graphics.newShader(code)
+end
+
+function FragmentProgram:FragmentProgramHeight()
+  return math.ceil(#self.channels / 4)
 end
 
 -- callback: function(row, component, name)
-function PixelSpec:forEachChannel(callback)
+function FragmentProgram:forEachChannel(callback)
   local comps ={'x','y','z','w'}
-  for c=0,#self.spec-1 do
-    callback(math.floor((c)/4), comps[(c % 4)+1], self.spec[c+1])
+  for c=0,#self.channels-1 do
+    callback(math.floor((c)/4), comps[(c % 4)+1], self.channels[c+1])
   end
 end
 
-function PixelSpec:write(index, source)
+function FragmentProgram:write(index, source)
   if not self.data then
     self.data = self.canvas:newImageData()
   end
   for y=0,self.data:getHeight()-1 do
     local values = {0,0,0,0}
     for k=1,4 do
-      local v = self.spec[k+y*4]
+      local v = self.channels[k+y*4]
       values[k] = source[v] or 0
     end
     self.data:setPixel(self.size,y,values)
   end
 end
 
-function PixelSpec:read(index, target)
+function FragmentProgram:read(index, target)
   -- TODO: Optmize
   if not self.data then
     self.data = self.canvas:newImageData()
@@ -57,7 +62,7 @@ function PixelSpec:read(index, target)
   for y=0,self.data:getHeight()-1 do
     local values = {self.data:getPixel(index,y)}
     for k=1,4 do
-      local v = self.spec[k+y*4]
+      local v = self.channels[k+y*4]
       if v then
         target[v] = values[k]
       end
@@ -66,9 +71,9 @@ function PixelSpec:read(index, target)
   return target
 end
 
-function PixelSpec:pixelSpecCode()
-  local code = '\n'
-  local h = self:pixelSpecHeight()
+function FragmentProgram:getDeclareChannels()
+  local code = '\n  //auto-code BEGIN\n'
+  local h = self:FragmentProgramHeight()
   for i=0,h-1 do
     code = code .. string.format('  vec4 _input_row_%d = Texel(_input_tex, vec2(_input_u, %.3f));\n',i,(2*i+1)/(h*2))
   end
@@ -79,11 +84,11 @@ function PixelSpec:pixelSpecCode()
       code = code .. string.format('  float _%s = _input_row_%d.%s;\n', name, row, component)
     end
   )
-
+  code = code .. '  //auto-code END\n'
   return code
 end
 
-function PixelSpec:updatePixels(shader)
+function FragmentProgram:updatePixels(shader)
   local source = self.canvas
   if self.needupload then
     -- uploads self.data to GPU
@@ -106,10 +111,10 @@ function PixelSpec:updatePixels(shader)
   self.data = nil
 end
 
-function PixelSpec:drawValues(index, sx, sy)
+function FragmentProgram:drawValues(index, sx, sy)
   local text = string.format('index=%f\n',index)
   local values = self:read(index)
-  for k,v in ipairs(self.spec) do
+  for k,v in ipairs(self.channels) do
     text = text..string.format('%s=%.2f\n',v,values[v])
   end
   love.graphics.print(text,sx,sy)

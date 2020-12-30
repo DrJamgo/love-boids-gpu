@@ -5,15 +5,14 @@ Boids.uniforms.ruleSeparation = 20
 Boids.uniforms.ruleAlignment = 10
 Boids.uniforms.ruleCohesion = 30
 Boids.uniforms.sight = 50
-table.insert(Boids.spec, 'fraction')
-table.insert(Boids.spec, 'hp')
+table.insert(Boids.channels, 'fraction')
+table.insert(Boids.channels, 'hp')
 
 function Boids:init(...)
   Dynamic.init(self, ...)
-  self.behaviourshader = self.behaviourshader:gsub('PIXELSPEC', self:pixelSpecCode())
-  self.behaviourshader = love.graphics.newShader(self.shadercommons .. self.behaviourshader)
-  self.visualshader = self.visualshader:gsub('PIXELSPEC', self:pixelSpecCode())
-  self.visualshader = love.graphics.newShader(self.shadercommons .. self.visualshader)
+  self.behaviourshader = self:makeProgram(Dynamic.shadercommons..self.behaviourshader)
+  self.visualshader = self:makeProgram(Dynamic.shadercommons..self.visualshader)
+
   self.uniforms.palette = love.graphics.newImage('palette.png')
   self.uniforms.palette:setFilter('nearest','nearest')
   self.uniforms.densityOrderHeat = 1
@@ -62,7 +61,8 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
-  PIXELSPEC
+  // This line will be replaced by auto-code
+  DECLARE_CHANNELS
 
   vec2 pos = vec2(_x,_y);
   vec2 velo = vec2(_vx,_vy);

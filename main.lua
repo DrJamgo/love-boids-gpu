@@ -15,7 +15,7 @@ require "physics.boids"
 require "physics.world"
 
 gWorld = World(love.graphics.getDimensions())
-gSwarm = Boids(gWorld, 2048)
+gSwarm = Dynamic(gWorld, 2048)
 
 gGame = {
   time = 0,
@@ -98,9 +98,8 @@ function love.draw()
   gSwarm:drawValues(1, love.graphics.transformPoint(unit.x,unit.y))
 
   love.graphics.print('Rightclick to add Boids',10,20)
-  love.graphics.printf(string.format('Boids: %d/%d',gSwarm.size, gSwarm.capacity-1),10,40,200,'left')
+  love.graphics.printf(string.format('Boids: %d / %d',gSwarm.size, gSwarm.capacity-1),10,40,200,'left')
   gWiggleValues:draw(10,love.graphics.getHeight()-100,300)
-
 end
 
 function love.keypressed(key)
