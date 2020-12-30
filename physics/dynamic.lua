@@ -216,34 +216,5 @@ end
 -- FOR DEBUG ONLY --
 
 function Dynamic:draw()
-  local canvas = self.canvas
-  love.graphics.push()
-  love.graphics.translate(0,0)
-  local scale = 40
-  local w,h = canvas:getWidth(), canvas:getHeight()
-  love.graphics.rectangle('line',0,0,w*scale,h*scale)
-  love.graphics.push()
-  
-  love.graphics.scale(scale,scale)
-  local x,y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
 
-  love.graphics.setShader(shader)
-  love.graphics.setBlendMode('replace','premultiplied')
-  --love.graphics.draw(canvas,0,0)
-  love.graphics.reset()
-  
-  love.graphics.pop()
-
-  if x < w and x > 0 and y < h and y > 0 then
-    x = math.floor(x)
-    love.graphics.rectangle('line',x*scale,0,scale,scale*canvas:getHeight())
-    self:drawValues(x,x*scale,canvas:getHeight()*scale)
-  end
-  love.graphics.pop()
-
-  local body = {}
-  for i=1,self.size do
-    --self:read(i, body)
-    --love.graphics.circle('line', body.x, body.y, body.r)
-  end
 end
