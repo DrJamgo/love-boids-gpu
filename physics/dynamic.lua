@@ -45,7 +45,6 @@ Dynamic.shadercommons = [[
 
 -- controlls behaviour of body
 Dynamic.updateshader = [[
-
 uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
 uniform float dt;
@@ -90,7 +89,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       vec2 diff = vec2(cos(angle),sin(angle));
       float texval = Texel(dynamicTex, (pos+diff*radius) / dynamicTexSize).a * textureFactor;
       vec2 delta = texval * diff / numSteps * (MASS_FACTOR);
-      summed += length(delta) / numSteps;
+      //summed += length(delta) / numSteps;
       vector += delta;
     }
     vec2 targetVelo = vector.xy * velocityFactor;
@@ -191,9 +190,9 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     float density = (1.0-pow(distToCenter,densityOrder));
     
     result.a = density * v_mass / MASS_FACTOR;
-    result.gb = ((v_velo / SPEED_FACTOR) + offset);
-    result.r = 1-distToCenter;
-    if(result.r <= 0) {
+    result.rg = ((v_velo / SPEED_FACTOR) + offset);
+    result.b = 1;
+    if(result.a <= 0) {
       discard;
     }
     return result;

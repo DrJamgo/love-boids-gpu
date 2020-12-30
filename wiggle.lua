@@ -21,18 +21,24 @@ function Wiggle:keypressed(key)
   end
 end
 
-function Wiggle:draw(x, y, width, align)
+function Wiggle:draw(x, y, width)
+  love.graphics.printf(
+    'Press [key] -> increase Value\n'..
+    'Press <shift>+[key] -> decrease Value'
+    ,x, y, width, align or 'left')
+  y = y+30
+
   for k,v in pairs(self) do
     if type(v) == 'table' then
       local t = self[k].table
       local name = self[k].value
       local value = t[name]
       if type(value) == 'number' then
-        love.graphics.printf(string.format('[%s] %s=%.3f',k,name,value),x, y, width, align or 'right')
+        love.graphics.printf(string.format('[%s] %s=%.3f',k,name,value),x, y, width, 'left')
       else
-        love.graphics.printf(string.format('[%s] %s=%s',k,name,tostring(value)),x, y, width, align or 'right')
+        love.graphics.printf(string.format('[%s] %s=%s',k,name,tostring(value)),x, y, width, 'left')
       end
-      y = y + 20
+      y = y + 12
     end
   end
 end

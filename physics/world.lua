@@ -2,18 +2,13 @@
 World = Class()
 local testimage = love.graphics.newImage('test3.png')
 
-function World:init(width, height, maxspeed, maxmass)
+function World:init(width, height)
   self.dynamic = love.graphics.newCanvas(testimage:getDimensions())
   self.target = love.graphics.newCanvas(testimage:getDimensions())
-  self.transform = love.math.newTransform(0,0,0,1)
 end
 
-function World:update()
-  self.dynamic = nil
-  self.dynamic = self.target
-  self.target = love.graphics.newCanvas(self.target:getDimensions())
-  
-  self.target:renderTo(
+function World:addBorder(target, d)
+  target:renderTo(
     function()
       love.graphics.clear(0,0,0,0)
       local w,h = self:getDimensions()
@@ -32,6 +27,14 @@ function World:update()
   love.graphics.reset()
 end
 
+function World:update()
+  self.dynamic = nil
+  self.dynamic = self.target
+  self.target = love.graphics.newCanvas(self.target:getDimensions())
+  
+  self:addBorder(self.target, 10)
+end
+
 function World:getDimensions()
   return self.dynamic:getDimensions()
 end
@@ -39,9 +42,4 @@ end
 function World:draw()
   love.graphics.rectangle('line',0,0,love.graphics.getWidth(), love.graphics.getHeight())
   love.graphics.draw(self.dynamic)
-
-  local data = self.dynamic:newImageData()
-  local cx, cy = love.mouse.getPosition()
-
-  --love.graphics.print(string.format("cursor %d,%d: %.2f %.2f %.2f %.2f", cx, cy, data:getPixel(cx, cy)), 0, love.graphics.getHeight()-80)
 end

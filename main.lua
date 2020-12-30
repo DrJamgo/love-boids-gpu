@@ -54,8 +54,10 @@ function love.update(dt)
   local r = love.math.random(2,5)
   local mass = math.sqrt(r)
   if love.mouse.isDown(2) then
-    local x,y = gWorld.transform:inverseTransformPoint(love.mouse.getPosition())
-    gSwarm:addBody({x=x,y=y,m=mass,r=r,fraction=1,hp=1})
+    for i=1,10 do
+    local x,y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
+      gSwarm:addBody({x=x+love.math.random(-1,1),y=y+love.math.random(-1,1),m=mass,r=r,fraction=1,hp=1})
+    end
   elseif not gGame.pause then
     if gSwarm.size < 200 then
       gSwarm:addBody({x=200+love.math.random(-1,1),y=200+love.math.random(-1,1),m=mass,r=r,fraction=0,hp=1})
@@ -89,19 +91,16 @@ function love.draw()
   love.graphics.pop()
 
     -- debug drawing
-  love.graphics.replaceTransform(gWorld.transform)
   gWorld:draw()
   local unit = gSwarm:read(1)
-  --love.graphics.circle('line', unit.x, unit.y, unit.r)
+  love.graphics.circle('line', unit.x, unit.y, unit.r)
   love.graphics.reset()
-  gSwarm:drawValues(1, gWorld.transform:transformPoint(unit.x,unit.y))
+  gSwarm:drawValues(1, love.graphics.transformPoint(unit.x,unit.y))
 
-  love.graphics.printf(string.format('FPS:%.1f',FPS),love.graphics.getWidth()-200,0,200,'right')
-  love.graphics.printf(string.format('Bodies:%d',gSwarm.size),love.graphics.getWidth()-200,20,200,'right')
+  love.graphics.print('Rightclick to add Boids',10,20)
+  love.graphics.printf(string.format('Boids: %d/%d',gSwarm.size, gSwarm.capacity-1),10,40,200,'left')
+  gWiggleValues:draw(10,love.graphics.getHeight()-100,300)
 
-  gWiggleValues:draw(love.graphics.getWidth()-300,love.graphics.getHeight()-80,300)
-
-  love.graphics.draw(gSwarm.canvas, 0, love.graphics.getHeight()-100, 0, 4)
 end
 
 function love.keypressed(key)
