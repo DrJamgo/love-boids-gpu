@@ -4,6 +4,8 @@ Boids = Class({__includes={Dynamic}})
 Boids.uniforms.ruleSeparation = 2000
 Boids.uniforms.ruleAlignment = 10
 Boids.uniforms.ruleCohesion = 30
+table.insert(Boids.spec, 'fraction')
+table.insert(Boids.spec, 'hp')
 
 function Boids:init(...)
   Dynamic.init(self, ...)
@@ -210,7 +212,7 @@ function Boids:draw()
   love.graphics.setShader(self.ectoshader)
   self:sendUniforms()
   self.ectoshader:send('bodiesTex', self.canvas)
-  self.ectoshader:send('bodiesTexSize', {self.data:getDimensions()})
+  self.ectoshader:send('bodiesTexSize', {self.canvas:getDimensions()})
   love.graphics.drawInstanced(mesh, self.size)
   love.graphics.reset()
 end

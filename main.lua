@@ -14,7 +14,7 @@ gWiggleValues = require 'wiggle'
 require "physics.boids"
 require "physics.world"
 
-gWorld = World(love.graphics.getDimensions())--love.graphics.getDimensions())
+gWorld = World(love.graphics.getDimensions())
 gSwarm = Boids(gWorld, 2048)
 
 gGame = {
@@ -55,10 +55,10 @@ function love.update(dt)
   local mass = math.sqrt(r)
   if love.mouse.isDown(2) then
     local x,y = gWorld.transform:inverseTransformPoint(love.mouse.getPosition())
-    gSwarm:addBody({x=x,y=y,m=mass,r=r})
+    gSwarm:addBody({x=x,y=y,m=mass,r=r,fraction=1,hp=1})
   elseif not gGame.pause then
-    if gSwarm.size < 400 then
-      gSwarm:addBody({x=200+love.math.random(-1,1),y=200+love.math.random(-1,1),m=mass,r=r})
+    if gSwarm.size < 200 then
+      gSwarm:addBody({x=200+love.math.random(-1,1),y=200+love.math.random(-1,1),m=mass,r=r,fraction=0,hp=1})
     end
   end
 
@@ -85,9 +85,6 @@ function love.draw()
 
   love.graphics.setCanvas()
   love.graphics.setColor(1,1,1,1)
-  --love.graphics.draw(town,0,0,0,1,1)
-
-  
   love.graphics.draw(canvas)
   love.graphics.pop()
 
@@ -95,7 +92,7 @@ function love.draw()
   love.graphics.replaceTransform(gWorld.transform)
   gWorld:draw()
   local unit = gSwarm:read(1)
-  love.graphics.circle('line', unit.x, unit.y, unit.r)
+  --love.graphics.circle('line', unit.x, unit.y, unit.r)
   love.graphics.reset()
   gSwarm:drawValues(1, gWorld.transform:transformPoint(unit.x,unit.y))
 
@@ -104,7 +101,7 @@ function love.draw()
 
   gWiggleValues:draw(love.graphics.getWidth()-300,love.graphics.getHeight()-80,300)
 
-
+  love.graphics.draw(gSwarm.canvas, 0, love.graphics.getHeight()-100, 0, 4)
 end
 
 function love.keypressed(key)

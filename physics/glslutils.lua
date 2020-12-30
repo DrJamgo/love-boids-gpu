@@ -36,6 +36,9 @@ function PixelSpec:forEachChannel(callback)
 end
 
 function PixelSpec:write(index, source)
+  if not self.data then
+    self.data = self.canvas:newImageData()
+  end
   for y=0,self.data:getHeight()-1 do
     local values = {0,0,0,0}
     for k=1,4 do
@@ -48,10 +51,18 @@ end
 
 function PixelSpec:read(index, target)
   -- TODO: Optmize
+  if not self.data then
+    self.data = self.canvas:newImageData()
+  end
   local target = target or {}
-  for k,v in ipairs(self.spec) do
-    local values = {self.data:getPixel(index,(k-1)/4)}
-    target[v] = values[(k-1)%4+1]
+  for y=0,self.data:getHeight()-1 do
+    local values = {self.data:getPixel(index,y)}
+    for k=1,4 do
+      local v = self.spec[k+y*4]
+      if v then
+        target[v] = values[k]
+      end
+    end
   end
   return target
 end
@@ -76,6 +87,7 @@ end
 function PixelSpec:updatePixels(shader)
   local source = self.canvas
   if self.needupload then
+    -- uploads self.data to GPU
     source = love.graphics.newImage(self.data)
     self.needupload = nil
   end
@@ -92,14 +104,14 @@ function PixelSpec:updatePixels(shader)
   )
   destination:setFilter('nearest','nearest')
   self.canvas = destination
-  self.data = self.canvas:newImageData()
+  self.data = nil
 end
 
 function PixelSpec:drawValues(index, sx, sy)
   local text = string.format('index=%f\n',index)
+  local values = self:read(index)
   for k,v in ipairs(self.spec) do
-    local values = {self.data:getPixel(index,(k-1)/4)}
-    text = text..string.format('%s=%.2f\n',v,values[(k-1)%4+1])
+    text = text..string.format('%s=%.2f\n',v,values[v])
   end
   love.graphics.print(text,sx,sy)
 end

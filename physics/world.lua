@@ -2,13 +2,11 @@
 World = Class()
 local testimage = love.graphics.newImage('test3.png')
 
-
 function World:init(width, height, maxspeed, maxmass)
   self.dynamic = love.graphics.newCanvas(testimage:getDimensions())
   self.target = love.graphics.newCanvas(testimage:getDimensions())
   self.transform = love.math.newTransform(0,0,0,1)
 end
-
 
 function World:update()
   self.dynamic = nil
@@ -23,6 +21,8 @@ function World:update()
       love.graphics.setBlendMode('replace','premultiplied')
       love.graphics.setColor(0,0.5,0.5,1)
       love.graphics.draw(testimage)
+
+      -- Add a Frame around the world
       love.graphics.rectangle('fill',0,0,d,h)
       love.graphics.rectangle('fill',w-d,0,d,h)
       love.graphics.rectangle('fill',0,0,w,d)

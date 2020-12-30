@@ -182,7 +182,7 @@ vec4 position( mat4 transform_projection, vec4 vertex_position )
 
 #ifdef PIXEL
 
-const vec2 offset = vec2(1,1) * 0.5 + 0.5/255;
+const vec2 offset = vec2(1,1) * 0.5;
 
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
@@ -205,7 +205,7 @@ function Dynamic:renderToWorld(world)
   love.graphics.setShader(self.bodyToWorldShader)
   self:sendUniforms()
   self.bodyToWorldShader:send('bodiesTex', self.canvas)
-  self.bodyToWorldShader:send('bodiesTexSize', {self.data:getDimensions()})
+  self.bodyToWorldShader:send('bodiesTexSize', {self.canvas:getDimensions()})
   love.graphics.setBlendMode('lighten','premultiplied')
   self.world.target:renderTo(function()
     love.graphics.drawInstanced(mesh, self.size)
