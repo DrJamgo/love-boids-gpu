@@ -17,7 +17,6 @@ require "physics.world"
 gWorld = World(love.graphics.getDimensions())
 gBoids = Boids(gWorld, 2048)
 gBalls = Dynamic(gWorld, 2048)
-
 gGame = {
   pause = false
 }

@@ -6,7 +6,7 @@ Boids.uniforms.ruleSeparation = 20
 Boids.uniforms.ruleAlignment = 10
 Boids.uniforms.ruleCohesion = 30
 Boids.uniforms.sight = 50
-table.insert(Boids.channels, 'fraction')
+Boids.uniforms.fraction = 1
 table.insert(Boids.channels, 'hp')
 
 function Boids:init(...)
@@ -41,6 +41,7 @@ uniform int sight;
 uniform float ruleCohesion;
 uniform float ruleAlignment;
 uniform float ruleSeparation;
+uniform float fraction;
 
 #ifdef VERTEX
 vec4 position( mat4 transform_projection, vec4 vertex_position )
@@ -89,7 +90,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
         // only sample outside own body.
         if(dist > radius+1) {
           // my boids
-          if (dynamic.b == 1) {
+          if (dynamic.b == fraction) {
             vec2 velocity = (dynamic.rg - vec2(0.5,0.5)) * SPEED_FACTOR;
             vecCohesion += dv;
             vecAlignment += velocity;
@@ -221,6 +222,9 @@ function Boids:drawDebug()
   love.graphics.print(string.format('bbox=%d,%d - %d,%d',stats.x.min, stats.y.min, stats.x.max, stats.y.max),x,y)
   love.graphics.print(string.format('avg=%d,%d',stats.x.avg, stats.y.avg),stats.x.avg, stats.y.avg)
   love.graphics.circle('line',stats.x.avg, stats.y.avg,2)
-  love.graphics.print(string.format('stddev=%d,%d',stats.x.stddev, stats.y.stddev),stats.x.avg, stats.y.avg-stats.y.stddev*2)
-  love.graphics.ellipse('line', stats.x.avg, stats.y.avg, stats.x.stddev*2, stats.y.stddev*2)
+  love.graphics.print(string.format('stddev=%d,%d',stats.x.stddev, stats.y.stddev),stats.x.avg, stats.y.avg-stats.y.stddev)
+  love.graphics.ellipse('line', stats.x.avg, stats.y.avg, stats.x.stddev, stats.y.stddev)
+
+  love.graphics.print(string.format('v_avg=%d,%d',stats.vx.avg,stats.vy.avg),stats.x.avg+stats.vx.avg, stats.y.avg+stats.vy.avg)
+  love.graphics.line(stats.x.avg, stats.y.avg, stats.x.avg+stats.vx.avg, stats.y.avg+stats.vy.avg)
 end

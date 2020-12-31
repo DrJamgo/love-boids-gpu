@@ -113,7 +113,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
   vec2 pos = vec2(_x,_y);
   vec2 velo = vec2(_vx,_vy);
-  float radius = _r+1;
+  float radius = _r+1.5;
   float mass = _m;
 
   vec4 result;
@@ -171,6 +171,7 @@ varying float v_mass;
 varying float v_radius;
 varying vec2  v_vertex;
 varying vec2  v_velo;
+uniform float fraction;
 
 #ifdef VERTEX
 
@@ -205,7 +206,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
     
     result.a = density * v_mass / MASS_FACTOR;
     result.rg = ((v_velo / SPEED_FACTOR) + offset);
-    result.b = 1;
+    result.b = fraction;
     if(result.a <= 0) {
       discard;
     }

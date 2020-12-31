@@ -28,40 +28,41 @@ uniform int count;
 vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 {
   vec4 result = vec4(0,0,0,0);
+  vec2 uv = vec2(0, texture_coords.y);
   if(_col == 0) {
-    result = Texel(fragmentTex, vec2(0, texture_coords.y));
+    result = Texel(fragmentTex, uv);
     for(int i = 1; i < count; i++) {
-      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      uv.x = float(i)/(fragmentTexSize.x);
       result = min(result, Texel(fragmentTex, uv));
     }
   }
   else  if(_col == 1) {
     result = Texel(fragmentTex, vec2(0, texture_coords.y));
     for(int i = 1; i < count; i++) {
-      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      uv.x = float(i)/(fragmentTexSize.x);
       result = max(result, Texel(fragmentTex, uv));
     }
   }
   else if(_col == 2) {
     for(int i = 0; i < count; i++) {
-      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      uv.x = float(i)/(fragmentTexSize.x);
       result += Texel(fragmentTex, uv);
     }
   }
   else if(_col == 3) {
     for(int i = 0; i < count; i++) {
-      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      uv.x = float(i)/(fragmentTexSize.x);
       result += Texel(fragmentTex, uv) / float(count);
     }
   }
   else if(_col == 4) {
     vec4 avg = vec4(0,0,0,0);
     for(int i = 0; i < count; i++) {
-      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      uv.x = float(i)/(fragmentTexSize.x);
       avg += Texel(fragmentTex, uv) / float(count);
     }
     for(int i = 0; i < count; i++) {
-      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      uv.x = float(i)/(fragmentTexSize.x);
       vec4 dist = Texel(fragmentTex, uv)-avg;
       result += (dist * dist) / float(count);
     }
