@@ -23,10 +23,10 @@ function Dynamic:init(world, maxbodies)
 end
 
 function Dynamic:addBody(body)
-  if self.size < self.capacity-1 then
-    self.size = self.size + 1
+  if self.size < self.capacity then
     self:write(self.size, body)
     self.needupload = true
+    self.size = self.size + 1
   end
 end
 
@@ -121,7 +121,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
   vec2 pos = vec2(_x,_y);
   vec2 velo = vec2(_vx,_vy);
-  float radius = _r+2;
+  float radius = _r+1;
   float mass = _m;
 
   vec4 result;
@@ -183,11 +183,10 @@ varying vec2  v_velo;
 #ifdef VERTEX
 
 #define _input_tex bodiesTex
+#define _input_u (float(love_InstanceID) / bodiesTexSize.x)
 
 vec4 position( mat4 transform_projection, vec4 vertex_position )
 {
-  float _input_u = float(love_InstanceID) / bodiesTexSize.x;
-
   // This line will be replaced by auto-code
   DECLARE_CHANNELS
 

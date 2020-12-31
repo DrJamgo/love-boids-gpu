@@ -15,8 +15,8 @@ require "physics.boids"
 require "physics.world"
 
 gWorld = World(love.graphics.getDimensions())
-gBoids = Boids(gWorld, 2048)
-gBalls = Dynamic(gWorld, 2048)
+gBoids = Boids(gWorld, 4)
+gBalls = Dynamic(gWorld, 4)
 
 gGame = {
   pause = false
@@ -84,13 +84,16 @@ function love.draw()
   gWorld:draw()
 
   love.graphics.print({{1,0,0,1},'Rightclick',{1,1,1,1},' to add Boids'},10,25)
-  love.graphics.printf(string.format('Boids: %d / %d',gBoids.size, gBoids.capacity-1),10,40,200,'left')
+  love.graphics.printf(string.format('Boids: %d / %d',gBoids.size, gBoids.capacity),10,40,200,'left')
 
   love.graphics.print({{1,0,0,1},'Leftclick',{1,1,1,1},' to add Balls'},10,65)
-  love.graphics.printf(string.format('Balls: %d / %d',gBalls.size, gBalls.capacity-1),10,80,200,'left')
+  love.graphics.printf(string.format('Balls: %d / %d',gBalls.size, gBalls.capacity),10,80,200,'left')
 
   love.graphics.printf(string.format('FPS: %.1f',FPS),10,120,200,'left',0,1.5)
   gWiggleValues:draw(10,love.graphics.getHeight()-100,300)
+
+
+  love.graphics.draw(gBoids.canvas,0,0,0,8,8)
 end
 
 function love.keypressed(key)

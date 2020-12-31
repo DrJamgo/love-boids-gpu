@@ -33,7 +33,7 @@ end
 
 -- callback: function(row, component, name)
 function FragmentProgram:forEachChannel(callback)
-  local comps ={'x','y','z','w'}
+  local comps ={'r','g','b','a'}
   for c=0,#self.channels-1 do
     callback(math.floor((c)/4), comps[(c % 4)+1], self.channels[c+1])
   end
@@ -49,7 +49,7 @@ function FragmentProgram:write(index, source)
       local v = self.channels[k+y*4]
       values[k] = source[v] or 0
     end
-    self.data:setPixel(self.size,y,values)
+    self.data:setPixel(index,y,values)
   end
 end
 
@@ -101,7 +101,7 @@ function FragmentProgram:updatePixels(shader)
       love.graphics.setBlendMode('replace','premultiplied')
       love.graphics.setShader(shader)
       self:sendUniforms()
-      love.graphics.setScissor(0,0,self.size+1,source:getHeight())
+      --love.graphics.setScissor(0,0,self.size+2,source:getHeight())
       love.graphics.draw(source)
       love.graphics.reset()
     end

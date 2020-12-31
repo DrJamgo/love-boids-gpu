@@ -23,21 +23,9 @@ function Boids:init(...)
   gWiggleValues:add('v', self.uniforms, 'sight')
 end
 
--- A simple small triangle with the default position, texture coordinate, and color vertex attributes.
-local vertices = {
-  { 0,  0},
-	{-1, -1},
-	{ 1, -1},
-  { 1,  1},
-  {-1,  1},
-  {-1, -1},
-}
-local mesh = love.graphics.newMesh(vertices, "fan", "static")
-
 Boids.behaviourshader = 
 Dynamic.glslcommons..
 [[
-
 uniform Image dynamicTex;
 uniform vec2  dynamicTexSize;
 uniform float dt;
@@ -71,7 +59,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 
   vec2 pos = vec2(_x,_y);
   vec2 velo = vec2(_vx,_vy);
-  float radius = _r+2;
+  float radius = _r;
   float mass = _m;
 
   vec4 result;
@@ -93,9 +81,10 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       for(int y = -sight; y <= sight; y+=step) {
         vec2 dv = vec2(float(x),float(y)) + sightOffset;
         float dist = length(dv);
-        if (dist > radius+1) {
-          vec4 dynamic = Texel(dynamicTex, (pos + dv) / dynamicTexSize);
+        vec4 dynamic = Texel(dynamicTex, (pos + dv) / dynamicTexSize);
 
+        // only sample outside own body.
+        if(dist > radius+1) {
           // my boids
           if (dynamic.b == 1) {
             vec2 velocity = (dynamic.rg - vec2(0.5,0.5)) * SPEED_FACTOR;
@@ -109,7 +98,7 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
             vecSeparation += -normalize(dv) * f;
           }
         }
-      } 
+      }
     }
 
     velo += vecSeparation * ruleSeparation * dt;
@@ -144,12 +133,6 @@ function Boids:update(dt)
   self:setUniform('dt', dt)
   self:setUniform('dynamicTex', self.world.dynamic)
   self:setUniform('dynamicTexSize', {self.world.dynamic:getDimensions()})
-
-  if love.mouse.isDown(1) then
-    self:setUniform('target', {love.graphics.inverseTransformPoint(love.mouse.getPosition())})
-  else
-    self:setUniform('target', {-1,-1})
-  end
   self:updatePixels(self.behaviourshader)
 end
 
@@ -168,21 +151,20 @@ varying vec2  v_vertex;
 
 #ifdef VERTEX
 
+#define _input_tex bodiesTex
+#define _input_u (float(love_InstanceID) / bodiesTexSize.x)
+
 vec4 position( mat4 transform_projection, vec4 vertex_position )
 {
-  float bodiesTexU = float(love_InstanceID) / bodiesTexSize.x;
-  vec4 body0 = Texel(bodiesTex, vec2(bodiesTexU, 0.25));
-  vec4 body1 = Texel(bodiesTex, vec2(bodiesTexU, 0.75));
-  vec2 pos = body0.xy;
-  vec2 velo = body0.zw;
-  float radius = body1.x;
-  float mass = body1.y;
+  // This line will be replaced by auto-code
+  DECLARE_CHANNELS
 
-  v_radius = radius;
-  v_mass = mass;
+  vec2 pos = vec2(_x,_y);
+  float v_radius = _r;
+  float v_mass = _m;
 
   v_vertex = vertex_position.xy;
-  vertex_position.xy += vertex_position.xy * 2 * v_radius + pos;
+  vertex_position.xy += vertex_position.xy * v_radius + pos;
   return transform_projection * vertex_position;
 }
 #endif
@@ -203,6 +185,17 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
 }
 #endif
 ]]
+
+-- A simple small triangle with the default position, texture coordinate, and color vertex attributes.
+local vertices = {
+  { 0,  0},
+	{-1, -1},
+	{ 1, -1},
+  { 1,  1},
+  {-1,  1},
+  {-1, -1},
+}
+local mesh = love.graphics.newMesh(vertices, "fan", "static")
 
 function Boids:draw()
   love.graphics.setShader(self.visualshader)

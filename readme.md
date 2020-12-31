@@ -1,8 +1,7 @@
 # love-boids-gpu
-A [Boids](https://en.wikipedia.org/wiki/Boids) algorithm implementation for LÖVE Framework running mostly on GPU
+A [Boids](https://en.wikipedia.org/wiki/Boids) algorithm implementation for [LÖVE](https://love2d.org/) Framework running mostly on GPU
 
-This is a Boids and Solid object colision implementation for [LÖVE](https://love2d.org/). (I use version 11.3)<br>
-The Math runs on GPU, abusing fragment shaders as general purpose compute units.
+The collision and boids math runs on GPU, using fragment shaders as general purpose compute units.
 
 ## Demo
 The Demo shows interaction betwen up to 2047 Solid Balls and 2047 Boids.
