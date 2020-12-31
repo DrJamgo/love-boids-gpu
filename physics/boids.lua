@@ -211,10 +211,16 @@ function Boids:draw()
 end
 
 function Boids:drawDebug()
+  --
+  -- Draw statistical values
+  -- 
   local stats = self.stats.stats
   local x,y = stats.x.min, stats.y.min
   local w,h = stats.x.max - x, stats.y.max - y
   love.graphics.rectangle('line', x,y,w,h)
-  love.graphics.print(string.format('count=%d',self.size),x,y)
-  love.graphics.circle('line', stats.x.avg, stats.y.avg,10)
+  love.graphics.print(string.format('bbox=%d,%d - %d,%d',stats.x.min, stats.y.min, stats.x.max, stats.y.max),x,y)
+  love.graphics.print(string.format('avg=%d,%d',stats.x.avg, stats.y.avg),stats.x.avg, stats.y.avg)
+  love.graphics.circle('line',stats.x.avg, stats.y.avg,2)
+  love.graphics.print(string.format('stddev=%d,%d',stats.x.stddev, stats.y.stddev),stats.x.avg, stats.y.avg-stats.y.stddev*2)
+  love.graphics.ellipse('line', stats.x.avg, stats.y.avg, stats.x.stddev*2, stats.y.stddev*2)
 end

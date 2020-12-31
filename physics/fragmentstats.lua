@@ -4,7 +4,7 @@ FragmentStats = Class({__includes={Uniforms}})
 function FragmentStats:init(fragmentprogram)
   self.channels = channels
   self.program = love.graphics.newShader(self.program)
-  self.functions = {'min','max','sum','avg'}
+  self.functions = {'min','max','sum','avg','stddev'}
   local tex = fragmentprogram.canvas
   self.canvas = love.graphics.newCanvas(#self.functions, tex:getHeight(), {format=tex:getFormat()})
   self.fragmentprogram = fragmentprogram
@@ -53,6 +53,19 @@ vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
       result += Texel(fragmentTex, uv) / float(count);
     }
+  }
+  else if(_col == 4) {
+    vec4 avg = vec4(0,0,0,0);
+    for(int i = 0; i < count; i++) {
+      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      avg += Texel(fragmentTex, uv) / float(count);
+    }
+    for(int i = 0; i < count; i++) {
+      vec2 uv = vec2(float(i)/fragmentTexSize.x, texture_coords.y);
+      vec4 dist = Texel(fragmentTex, uv)-avg;
+      result += (dist * dist) / float(count);
+    }
+    result = sqrt(result);
   }
   return result;
 }
