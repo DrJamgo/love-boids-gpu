@@ -1,4 +1,5 @@
 require 'physics.dynamic'
+require 'physics.fragmentstats'
 
 Boids = Class({__includes={Dynamic}})
 Boids.uniforms.ruleSeparation = 20
@@ -21,6 +22,8 @@ function Boids:init(...)
   gWiggleValues:add('a', self.uniforms, 'ruleAlignment')
   gWiggleValues:add('s', self.uniforms, 'ruleSeparation')
   gWiggleValues:add('v', self.uniforms, 'sight')
+
+  self.stats = FragmentStats(self)
 end
 
 Boids.behaviourshader = 
@@ -134,6 +137,7 @@ function Boids:update(dt)
   self:setUniform('dynamicTex', self.world.dynamic)
   self:setUniform('dynamicTexSize', {self.world.dynamic:getDimensions()})
   self:updatePixels(self.behaviourshader)
+  self.stats:update(self.canvas, self.size)
 end
 
 Boids.visualshader = 
@@ -204,4 +208,13 @@ function Boids:draw()
   self.visualshader:send('bodiesTexSize', {self.canvas:getDimensions()})
   love.graphics.drawInstanced(mesh, self.size)
   love.graphics.reset()
+end
+
+function Boids:drawDebug()
+  local stats = self.stats.stats
+  local x,y = stats.x.min, stats.y.min
+  local w,h = stats.x.max - x, stats.y.max - y
+  love.graphics.rectangle('line', x,y,w,h)
+  love.graphics.print(string.format('count=%d',self.size),x,y)
+  love.graphics.circle('line', stats.x.avg, stats.y.avg,10)
 end

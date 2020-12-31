@@ -1,7 +1,7 @@
 
-require 'physics.glslutils'
+require 'physics.fragmentprogram'
 
-Dynamic = Class({__includes={Uniforms, FragmentProgram}})
+Dynamic = Class({__includes={FragmentProgram}})
 Dynamic.channels = {
   'x','y','vx','vy',
   'r','m'}
@@ -20,14 +20,6 @@ function Dynamic:init(world, maxbodies)
   self.world = world
   self.updateshader = self:makeProgram(self.updateshader)
   self.bodyToWorldShader = self:makeProgram(self.bodyToWorldShader)
-end
-
-function Dynamic:addBody(body)
-  if self.size < self.capacity then
-    self:write(self.size, body)
-    self.needupload = true
-    self.size = self.size + 1
-  end
 end
 
 Dynamic.MASS_FACTOR = 255 / math.pow(10,2)

@@ -1,4 +1,5 @@
 Uniforms = Class()
+Uniforms.uniforms = {}
 
 function Uniforms:setUniform(uniform, value)
   self.uniforms[uniform] = value
@@ -13,11 +14,10 @@ function Uniforms:sendUniforms()
   end
 end
 
-FragmentProgram = Class()
+FragmentProgram = Class({__includes={Uniforms}})
 function FragmentProgram:init(channels, maxbodies)
   self.channels = channels
-  self.data = love.image.newImageData(maxbodies, self:FragmentProgramHeight(), 'rgba32f')
-  self.needupload = true
+  self.canvas = love.graphics.newCanvas(maxbodies, self:FragmentProgramHeight(), {format='rgba16f'})
   self.size = 0
   self.capacity = maxbodies
 end
@@ -36,6 +36,14 @@ function FragmentProgram:forEachChannel(callback)
   local comps ={'r','g','b','a'}
   for c=0,#self.channels-1 do
     callback(math.floor((c)/4), comps[(c % 4)+1], self.channels[c+1])
+  end
+end
+
+function FragmentProgram:add(values)
+  if self.size < self.capacity then
+    self:write(self.size, values)
+    self.needupload = true
+    self.size = self.size + 1
   end
 end
 
@@ -101,7 +109,7 @@ function FragmentProgram:updatePixels(shader)
       love.graphics.setBlendMode('replace','premultiplied')
       love.graphics.setShader(shader)
       self:sendUniforms()
-      --love.graphics.setScissor(0,0,self.size+2,source:getHeight())
+      love.graphics.setScissor(0,0,self.size,source:getHeight())
       love.graphics.draw(source)
       love.graphics.reset()
     end

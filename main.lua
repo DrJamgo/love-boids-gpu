@@ -15,8 +15,8 @@ require "physics.boids"
 require "physics.world"
 
 gWorld = World(love.graphics.getDimensions())
-gBoids = Boids(gWorld, 4)
-gBalls = Dynamic(gWorld, 4)
+gBoids = Boids(gWorld, 2048)
+gBalls = Dynamic(gWorld, 2048)
 
 gGame = {
   pause = false
@@ -45,12 +45,12 @@ function love.update(dt)
   if love.mouse.isDown(2) then
     for i=1,10 do
     local x,y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
-      gBoids:addBody({x=x+love.math.random(-1,1),y=y+love.math.random(-1,1),m=mass,r=r,fraction=1,hp=1})
+      gBoids:add({x=x+love.math.random(-1,1),y=y+love.math.random(-1,1),m=mass,r=r,fraction=1,hp=1})
     end
   elseif love.mouse.isDown(1) then
     for i=1,10 do
     local x,y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
-      gBalls:addBody({x=x+love.math.random(-1,1),y=y+love.math.random(-1,1),m=mass,r=r,fraction=1,hp=1})
+      gBalls:add({x=x+love.math.random(-1,1),y=y+love.math.random(-1,1),m=mass,r=r,fraction=1,hp=1})
     end
   end
 
@@ -82,6 +82,7 @@ function love.draw()
 
   -- debug drawing
   gWorld:draw()
+  gBoids:drawDebug()
 
   love.graphics.print({{1,0,0,1},'Rightclick',{1,1,1,1},' to add Boids'},10,25)
   love.graphics.printf(string.format('Boids: %d / %d',gBoids.size, gBoids.capacity),10,40,200,'left')
@@ -91,9 +92,6 @@ function love.draw()
 
   love.graphics.printf(string.format('FPS: %.1f',FPS),10,120,200,'left',0,1.5)
   gWiggleValues:draw(10,love.graphics.getHeight()-100,300)
-
-
-  love.graphics.draw(gBoids.canvas,0,0,0,8,8)
 end
 
 function love.keypressed(key)
