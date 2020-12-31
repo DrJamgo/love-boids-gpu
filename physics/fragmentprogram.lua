@@ -103,6 +103,8 @@ function FragmentProgram:updatePixels(shader)
     source = love.graphics.newImage(self.data)
     self.needupload = nil
   end
+  -- yes, we crate a new canvas every time, and abondon the old one
+  -- OpenGL Drivers are very good at managing dynamic buffer allocations and reusing old ones.
   local destination = love.graphics.newCanvas(source:getWidth(), source:getHeight(), {format=source:getFormat()})  
   destination:renderTo(
     function()
