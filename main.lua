@@ -81,7 +81,7 @@ function love.draw()
 
   -- debug drawing
   gWorld:draw()
-  gBoids:drawDebug()
+  --gBoids:drawDebug()
 
   love.graphics.print({{1,0,0,1},'Rightclick',{1,1,1,1},' to add Boids'},10,25)
   love.graphics.printf(string.format('Boids: %d / %d',gBoids.size, gBoids.capacity),10,40,200,'left')
